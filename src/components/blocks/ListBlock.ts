@@ -1,5 +1,4 @@
 import { BasicBlock } from "./BasicBlock";
-import { NovaTab } from "../NovaTab";
 import { setIcon } from "obsidian";
 
 interface ListRow {
@@ -18,17 +17,13 @@ export class ListBlock extends BasicBlock {
 	listAdd: HTMLElement;
 	rows: ListRow[];
 
-	constructor(tab:NovaTab,elm:HTMLElement,newBlock:boolean=false,blockName?:string){
-		super(tab,elm,newBlock,blockName??'list');
-		this.listBody = this.body.createEl('div','nova-list-body');
-		this.listAdd = this.body.createEl('div','nova-list-add nova-list-row-block');
+	constructor(blockName?:string){
+		super(blockName??'list');
+		this.listBody = this.container.createEl('div','nova-list-body');
+		this.listAdd = this.container.createEl('div','nova-list-add nova-list-row-block');
 		setIcon(this.listAdd.createEl('div','nova-list-add-icon nova-icon'),'plus');
 		this.listAdd.createEl('div','nova-list-add-title').textContent = 'Add Item';
 		this.rows = [];
-		/*==*/
-		this.setFloatingHeader();
-		/* EVENTS */
-		this.handleInputs(this.body);
 	}
 
 	setData(data:string,override=true){

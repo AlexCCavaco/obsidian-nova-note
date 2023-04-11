@@ -1,14 +1,13 @@
 import { setIcon } from "obsidian";
 import { BasicBlock } from "./BasicBlock";
-import { NovaTab } from "../NovaTab";
 import { TextBlock } from "./TextBlock";
 
 export class TMPBlock extends BasicBlock {
 
 	tmp:HTMLElement;
 
-	constructor(tab:NovaTab,elm:HTMLElement,newBlock:boolean=false,blockName?:string){
-		super(tab,elm,newBlock,blockName??'tmp');
+	constructor(blockName?:string){
+		super(blockName??'tmp');
 		// @ts-ignore
 		let hasDataview = app.plugins && app.plugins.enabledPlugins['dataview'];
 		// @ts-ignore
@@ -39,7 +38,7 @@ export class TMPBlock extends BasicBlock {
 	}
 
 	createCol(title:string){
-		let col = this.body.createEl('div','nova-tmp-block-col');
+		let col = this.container.createEl('div','nova-tmp-block-col');
 		col.createEl('div','nova-tmp-block-title').textContent = title;
 		let createCell = (icon:string,title:string,cb?:Function,disable:boolean=false)=>this.createCell(col,icon,title,cb,disable);
 		return { col,createCell };
@@ -53,7 +52,7 @@ export class TMPBlock extends BasicBlock {
 		return cell;
 	}
 
-	setText(){ this.tab.setBlock((tab,elm)=>new TextBlock(tab,elm)); }
+	setText(){ /*this.container.setBlock((tab,elm)=>new TextBlock(tab,elm));*/ }
 	setList(){ /*TODO*/ }
 	setTasks(){ /*TODO*/ }
 	setTable(){ /*TODO*/ }
