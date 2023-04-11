@@ -1,8 +1,331 @@
-/*
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+/*/==> GENERAL <==/*/
 
-If your plugin does not need CSS, delete this file.
+.nova-icon {
+	height: 1em;
+	width: 1em;
+	margin: 0 auto;
+}
+.nova-icon > svg {
+	height: 100%;
+	width: 100%;
+	vertical-align: 2px;
+}
 
-*/
+/*/==> BASE <==/*/
+
+.nova-container {
+	width: 1000px;
+	max-width: 100%;
+	margin: auto;
+}
+
+
+
+
+/* TODO Check \/ */
+
+/*/==> CONTEXT MENU <==/*/
+
+.nova-context {
+	max-width: 100%;
+	width: 300px;
+	margin: 20px auto;
+	flex-direction: row;
+	border-radius: 5px;
+	padding: 0;
+	column-gap: 5px;
+	position: fixed;
+	display: none;
+}
+.nova-context.show {
+	display: flex;
+}
+.nova-context-col {
+	flex: 0 0 33.3%;
+	max-width: 33.3%;
+}
+.nova-context-col > .nova-context-col-title {
+	text-align: center;
+	width: 100%;
+	font-size: .9em;
+	font-weight: bold;
+}
+.nova-context-col > .nova-context-col-list {
+	display: flex;
+	flex-direction: column;
+	align-items: start;
+	align-content: center;
+	row-gap: 5px;
+}
+.nova-context-elm {
+	display: flex;
+	flex-direction: row;
+	text-align: left;
+	padding: 10px 15px;
+	background-color: var(--ui1);
+	border-radius: 5px;
+	width: 100%;
+	transition: background-color .3s, transform .3s;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.nova-context-elm.disabled {
+	opacity: .4;
+	cursor: not-allowed;
+}
+.nova-context-elm:not(.disabled):hover {
+	background-color: var(--ui2);
+	cursor: pointer;
+	transform: scale(1.04);
+}
+.nova-context-elm > .nova-context-elm-icon {
+	padding-right: 10px;
+}
+
+/***==============================***/
+
+
+.nova-head-button {
+	width: 25px;
+	opacity: .6;
+	text-align: center;
+	height: 25px;
+	line-height: 25px;
+	border-radius: 5px;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	align-content: center;
+}
+.nova-head-button:hover {
+	opacity: 1;
+	cursor: pointer;
+	background-color: var(--background-modifier-hover);
+}
+
+/* NOVA SECTION */
+
+.nova-section {
+	margin: 20px 0 50px;
+}
+.nova-section > .nova-sec-title {
+	font-size: 1.4em;
+	margin-bottom: 15px;
+}
+
+.nova-section .nova-split .nova-split-head {
+	display: flex;
+	flex-direction: row;
+	border-bottom: 1px solid var(--divider-color);
+	--split-header-height: 40px;
+	height: var(--split-header-height);
+	box-sizing: border-box;
+}
+.nova-section .nova-split .nova-split-head > * {
+	display: flex;
+	flex-direction: row;
+	align-content: center;
+	align-items: center;
+}
+.nova-section .nova-split .nova-split-head > .nova-split-tabs {
+	flex: 1 1 max-content;
+	box-sizing: border-box;
+}
+.nova-section .nova-split .nova-split-head > .nova-split-create {
+	flex: 0 0 25px;
+	width: 25px;
+	opacity: .6;
+	text-align: center;
+	border-bottom: 2px solid transparent;
+	box-sizing: border-box;
+}
+.nova-section .nova-split .nova-split-head > .nova-split-create:hover {
+	opacity: 1;
+	cursor: pointer;
+	border-bottom-color: var(--text-muted);
+}
+.nova-section .nova-split .nova-split-head > .nova-split-create > .nova-head-button {
+	width: 1em;
+	height: 1em;
+}
+.nova-section .nova-split .nova-split-head > .nova-split-create:hover > .nova-head-button {
+	background-color: transparent;
+	opacity: 1;
+}
+.nova-section .nova-split .nova-split-head > .nova-split-gap {
+	flex: 1 1 100%;
+}
+.nova-section .nova-split .nova-split-head > .nova-split-controls {
+	flex: 0 1 max-content;
+}
+.nova-section .nova-split .nova-split-head .nova-tab {
+	border-bottom: 2px solid transparent;
+	padding: 0 12px;
+	box-sizing: border-box;
+	transition: border .3s, color .3s;
+	position: relative;
+	z-index: 1;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	align-content: center;
+	fill: var(--text-muted);
+	font-size: .9em;
+	white-space: nowrap;
+}
+.nova-section .nova-split .nova-split-head .nova-tab .nova-tab-title {
+	color: var(--text-muted);
+	font-size: 1em;
+}
+.nova-section .nova-split .nova-split-head .nova-tab .nova-icon {
+	margin-right: 7px;
+}
+.nova-section .nova-split .nova-split-head .nova-tab .nova-icon:not(.show) {
+	display: none;
+}
+.nova-section .nova-split .nova-split-head .nova-tab .opts {
+	position: absolute;
+	bottom: -7px;
+	left: 0; right: 0;
+	width: 20px;
+	height: 20px;
+	margin: auto;
+	text-align: center;
+	background-color: var(--ui1);
+	display: none;
+	border-radius: 5px;
+	z-index: 10;
+}
+.nova-section .nova-split .nova-split-head .nova-tab:hover .opts {
+	display: block;
+}
+.nova-section .nova-split .nova-split-head .nova-tab .opts:hover {
+	background-color: var(--ui2);
+}
+.nova-section .nova-split .nova-split-head .nova-tab:hover { border-bottom-color: var(--text-muted); fill: var(--text-bold); }
+.nova-section .nova-split .nova-split-head .nova-tab:hover .nova-tab-title { color: var(--text-bold); }
+.nova-section .nova-split .nova-split-head .nova-tab.focused { border-bottom-color: var(--text-bold); fill: var(--text-bold); }
+.nova-section .nova-split .nova-split-head .nova-tab.focused .nova-tab-title { color: var(--text-bold); }
+
+.nova-section .nova-split .nova-split-body {}
+
+/* BLOCKS */
+
+.nova-tab-sec { width: 100%; display: none; }
+.nova-tab-sec.focused { display: block; }
+
+.nova-tab-block {
+	position: relative;
+}
+.nova-tab-block input,
+.nova-tab-block button,
+.nova-tab-block textarea,
+.nova-tab-block select {
+	font-size: 1em;
+}
+.nova-tab-block input,
+.nova-tab-block textarea {
+	border: 1px solid transparent;
+	outline: 0;
+}
+.nova-tab-block input:focus,
+.nova-tab-block button:focus,
+.nova-tab-block textarea:focus,
+.nova-tab-block select:focus {
+	border-color: var(--ui1);
+}
+.nova-tab-block .nova-text {
+	width: 100%;
+	border-radius: 0;
+	padding: 20px 10px;
+	max-width: 100%;
+	min-height: 65px;
+	resize: none;
+}
+
+.nova-tab-block-head {
+	display: flex;
+	flex-direction: row;
+	padding: 7px 0;
+}
+.nova-tab-block-head.float {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	z-index: 500;
+	pointer-events: none;
+}
+.nova-tab-block-head.float > * > * {
+	pointer-events: all;
+}
+.nova-tab-block-head > .nova-tab-block-gap {
+	flex: 1 1 100%;
+}
+.nova-tab-block-head > .nova-tab-block-controls {
+	flex: 1 1 max-content;
+}
+
+.nova-block-list {
+	display: flex;
+	flex-direction: column;
+}
+.nova-block-list > .nova-list-body {
+	display: flex;
+	flex-direction: column;
+}
+.nova-block-list .nova-list-row-block {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	height: 40px;
+	padding: 0 10px;
+	font-size: .9em;
+}
+.nova-block-list .nova-list-row-block:hover {
+	background-color: var(--bg2);
+}
+.nova-block-list .nova-list-row-block > * {
+	flex: 0 0 max-content;
+}
+.nova-block-list .nova-list-row-block > .title {
+	flex: 1 1 100%;
+	height: 100%;
+	background-color: transparent;
+	padding: 0 5px;
+	box-sizing: border-box;
+	color: var(--text-muted);
+}
+.nova-block-list .nova-list-row-block:hover > .title {
+	color: var(--text-bold);
+}
+.nova-block-list .nova-list-row-block svg {
+	fill: var(--text-muted);
+}
+.nova-block-list .nova-list-row-block:hover svg {
+	fill: var(--text-bold);
+}
+.nova-block-list .nova-list-row-sub {
+	padding-left: 20px;
+}
+.nova-block-list > .nova-list-body .nova-list-row-block {
+	border-top: 1px solid var(--divider-color);
+	border-bottom: 1px solid var(--divider-color);
+	margin-top: -1px;
+}
+.nova-block-list > .nova-list-body .nova-list-row-block .move { opacity: 0; }
+.nova-block-list > .nova-list-body .nova-list-row-block:hover .move { opacity: .6; }
+.nova-block-list > .nova-list-body .nova-list-row-block .move:hover { opacity: 1; cursor: move; }
+.nova-block-list > .nova-list-add {
+	opacity: .6;
+	background-color: transparent;
+}
+.nova-block-list > .nova-list-add .nova-list-add-icon {
+	flex: 0 0 max-content;
+}
+.nova-block-list > .nova-list-add .nova-list-add-title {
+	flex: 1 1 auto;
+	padding: 0 5px;
+}

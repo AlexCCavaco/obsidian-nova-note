@@ -1,96 +1,59 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
-import { NovaView, VIEW_TYPE } from "./src/NovaView";
-import { NovaFile } from "./src/NovaFile";
-import { SettingsTab } from "./src/SettingsTab";
+import { addIcon, App, CachedMetadata, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile, TFolder, WorkspaceLeaf } from 'obsidian';
+import { SettingsTab, DefaultSettings, Settings } from "./SettingsTab";
+import { Nova } from "./Nova";
+import { NovaView, VIEW_TYPE, VIEW_NAME, META_KEY } from "./NovaView";
 
-// Remember to rename these classes and interfaces!
-
-interface Settings {
-	enableFolderNote: boolean;
-	folderFileName: string;
-	allowSameFolderName: boolean;
-}
-
-const DEFAULT_SETTINGS: Settings = {
-	enableFolderNote: true,
-	folderFileName: '_main',
-	allowSameFolderName: true
-}
+export const icon = 'nova';
 
 export default class NovaNotePlugin extends Plugin {
+
 	settings: Settings;
+	nova: Nova;
 
 	async onload() {
 		await this.loadSettings();
 
-		this.registerView(VIEW_TYPE,(leaf) => new NovaView(leaf,this));
-		this.addRibbonIcon("package-plus", "Create Nova File",()=>{ this.createNovaFile(); });
-		this.addCommand({ id:"create-nova-file", name:"Create Nova File", callback:()=>{ this.createNovaFile(); } });
+		addIcon(icon,'<path fill="currentColor" d="M8.3 25c0-6.9 5.6-12.5 12.5-12.5h58.3c6.9 0 12.5 5.6 12.5 12.5v50c0 6.9-5.6 12.5-12.5 12.5H20.8c-6.9 0-12.5-5.6-12.5-12.5V25zm20.9 4.2c-2.3 0-4.2 1.9-4.2 4.2V50c0 2.3 1.9 4.2 4.2 4.2h16.7c2.3 0 4.2-1.9 4.2-4.2V33.3c0-2.3-1.9-4.2-4.2-4.2H29.2zm4.1 16.6v-8.3h8.3v8.3h-8.3zm29.2-16.6c-2.3 0-4.2 1.9-4.2 4.2 0 2.3 1.9 4.2 4.2 4.2h8.3c2.3 0 4.2-1.9 4.2-4.2 0-2.3-1.9-4.2-4.2-4.2h-8.3zm0 16.6c-2.3 0-4.2 1.9-4.2 4.2s1.9 4.2 4.2 4.2h8.3c2.3 0 4.2-1.9 4.2-4.2s-1.9-4.2-4.2-4.2h-8.3zM29.2 62.5c-2.3 0-4.2 1.9-4.2 4.2s1.9 4.2 4.2 4.2h41.7c2.3 0 4.2-1.9 4.2-4.2s-1.9-4.2-4.2-4.2H29.2z" fill-rule="evenodd" clip-rule="evenodd"/>');
+		this.addSettingTab(new SettingsTab(app, this));
+		this.nova = new Nova(this);
 
-		this.addSettingTab(new SettingsTab(this.app, this));
+		this.registerView(VIEW_TYPE,(leaf)=>new NovaView(leaf,this));
+		this.registerHoverLinkSource(META_KEY,{ display:'Nova Note',defaultMod:true });
 
-		/**
-		 * TODO
-		 * - Have a Nova View with blocks
-		 * - Have way to had
-		 * :blocks:
-		 * - Text
-		 * - List
-		 * - Tasks
-		 * - Parent Folder File/Folder Cards
-		 * - Table
-		 * - Cards that link to specified notes
-		 * - Timeline
-		 * - Calendar
-		 * - Custom md/html
-		 * - Board
-		 * :features:
-		 * - Open File of Same Name or _main when Folder is Clicked
-		 * :settings:
-		 * - Default Folder File Name [default:_main]
-		 */
+		// this.addRibbonIcon("package-plus", "Create Nova File",()=>{ this.nova.createFile(); });
+		this.addCommand({ id:"create-nova-file", name:"Create Nova File", callback:()=>this.nova.createFile() });
+		this.addCommand({ id:"toggle-nova-file", name:"Toggle Nova View", callback:()=>this.nova.toggleNova() });
 
+		app.workspace.on("file-open",(file)=>{ if(file && this.nova.isNovaFile(file)) this.nova.loadFile(file); });
+		app.workspace.on("file-menu",(menu, file, source, leaf)=>{
+			if(file===null) return;
+			if(file instanceof TFolder) {
+				menu.addItem((item) => {
+					item.setTitle('New Nova Note')
+						.setIcon(icon)
+						.onClick(()=>this.nova.createFile(file));
+				});
+				return;
+			}
+			if(file instanceof TFile && !this.nova.isNovaFile(file) && source==='sidebar-context-menu'){
+				menu.addItem((item) => {
+					item.setTitle('Open as Nova Note')
+						.setIcon(icon)
+						.onClick(()=>this.nova.convertToNova(file,true));
+				});
+				return;
+			}
+		});
+		// app.workspace.on("active-leaf-change",(leaf:WorkspaceLeaf|null)=>{ if(leaf) this.nova.loadSpace(leaf); });
 	}
 
 	async onunload() {
 		this.app.workspace.detachLeavesOfType(VIEW_TYPE);
-	}
-
-	async createNovaFile() {
-		let leaf = this.app.workspace.getLeaf(true);
-		let file = null;
-		for(let i = 0; i < 100; i++){
-			try {
-				this.app.
-				file = await this.app.vault.create(this.app.vault.configDir + '/Untitled Nova' + (i===0?'':' '+i),'');
-				break;
-			} catch(err){}
-		}
-		if(file===null) return;
-		await leaf.openFile(file);
-		//let file = new NovaFile(this);
-	}
-
-	async activateView() {
-		this.app.workspace.detachLeavesOfType(VIEW_TYPE);
-
-		await this.app.workspace.getRightLeaf(false).setViewState({
-			type: VIEW_TYPE,
-			active: true,
-		});
-
-		this.app.workspace.revealLeaf(
-			this.app.workspace.getLeavesOfType(VIEW_TYPE)[0]
-		);
+		super.unload();
 	}
 
 	/* SETTINGS */
+	async loadSettings(){ this.settings = Object.assign({}, DefaultSettings, await this.loadData()); }
+	async saveSettings(){ await this.saveData(this.settings); }
 
-	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-	}
-
-	async saveSettings() {
-		await this.saveData(this.settings);
-	}
 }

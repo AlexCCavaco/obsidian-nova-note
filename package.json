@@ -2,15 +2,12 @@
 	"name": "obsidian-nova-note",
 	"version": "0.0.1",
 	"description": "Create Dynamic Notes and Improve Note Navigation in Obsidian",
-	"main": "main.js",
+	"main": "./src/main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"version": "node version-bump.mjs && git add manifest.json versions.json",
-		"watch": "npm-watch"
-	},
-	"watch": {
-		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production"
+		"watch": "nodemon --exec \"npm run build\" -w \".\\src\\*\" -e \"ts,js,json\""
 	},
 	"keywords": [],
 	"author": "",
@@ -21,9 +18,18 @@
 		"@typescript-eslint/parser": "5.29.0",
 		"builtin-modules": "3.3.0",
 		"esbuild": "0.17.3",
+		"file": "^0.2.2",
+		"file-loader": "^6.2.0",
+		"hypermd": "^0.3.11",
 		"npm-watch": "^0.11.0",
 		"obsidian": "latest",
 		"tslib": "2.4.0",
 		"typescript": "4.7.4"
+	},
+	"dependencies": {
+		"@types/marked": "^4.0.8",
+		"dompurify": "^3.0.1",
+		"marked": "^4.3.0",
+		"uuid": "^9.0.0"
 	}
 }
