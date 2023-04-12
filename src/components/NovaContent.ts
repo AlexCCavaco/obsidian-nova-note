@@ -1,9 +1,11 @@
-import { TFile } from "obsidian";
+import {setIcon, TFile} from "obsidian";
 import { NovaView } from "../NovaView";
 import { Nova } from "../Nova";
 import NovaNotePlugin from "../main";
 import { BasicBlock } from "./blocks/BasicBlock";
 import { ContentLine } from "./ContentLine";
+import { ContextMenu } from "./ContextMenu";
+import {AddBlock} from "./blocks/AddBlock";
 
 export class NovaContent {
 
@@ -12,12 +14,13 @@ export class NovaContent {
 	file: TFile;
 	nova: Nova;
 
-	container: HTMLElement;
+	containerElm: HTMLElement;
 	titleElm: HTMLElement;
 	contentElm: HTMLElement;
-	addElm: HTMLElement;
 
+	contextMenu: ContextMenu;
 	blocks: BasicBlock[];
+	addRow: AddBlock;
 
 	constructor(view:NovaView){
 		this.plugin = view.plugin;
@@ -26,15 +29,17 @@ export class NovaContent {
 		this.nova = view.nova;
 		if(!this.file) return;
 
-		this.container = view.contentEl.createEl('div','nova-container');
-		this.titleElm = this.container.createEl('div','nova-title inline-title');
+		this.containerElm = view.contentEl.createEl('div','nova-container');
+		this.titleElm = this.containerElm.createEl('div','nova-title inline-title');
 		this.titleElm.textContent = this.file.basename;
-		this.contentElm = this.container.createEl('div','nova-content');
-		this.addElm = this.contentElm.createEl('div','nova-add-block');
+		this.contentElm = this.containerElm.createEl('div','nova-content');
 
 		this.blocks = [];
 
+		this.createContextMenu();
 		this.loadPluginSettings();
+
+		this.addRow = this.createAddBlock();
 
 		/**TODO
 		 * Create Context Menu to add Blocks
@@ -43,23 +48,36 @@ export class NovaContent {
 		 * Handle Blocks Interactions
 		 * Allow Blocks to be Moved
 		 * Allow Blocks to be moved to sides and create collumns
-		 * Allow Blocks to be moves under blocks inside cols
+		 * Allow Blocks to be moves under blocks.old inside cols
 		 */
 	}
 
 	loadPluginSettings(){
 		let settings = this.plugin.settings;
-		this.container.style.width = settings.noteWidth + (settings.noteWidthPercentage?'%':'px');
+		this.containerElm.style.width = settings.noteWidth + (settings.noteWidthPercentage?'%':'px');
+	}
+
+	createContextMenu(){
+		this.contextMenu = new ContextMenu(this);
+	}
+
+	createAddBlock(location?:HTMLElement):AddBlock {
+		if(!location) location = this.contentElm;
+		let block = new AddBlock(this);
+		location.appendChild(block.containerElm);
+		return block;
 	}
 
 	load(){}
 	save(){}
 
-	addBlock(block:BasicBlock){
+	addBlock(block:BasicBlock,calledFrom?:BasicBlock,clearAdd:boolean=true){
 		let contentLine = new ContentLine();
-		this.contentElm.insertBefore(contentLine.elm, this.addElm);
+		//this.contentElm.insertBefore(contentLine.elm, this.addElm);
 		contentLine.addBlock(block);
+		this.contentElm.insertBefore(contentLine.elm,this.addRow.containerElm);
 		this.blocks.push(block);
+		if(clearAdd) this.addRow.clear();
 	}
 
 }

@@ -15,7 +15,7 @@ export class ContentCol {
 	}
 
 	addBlock(block:BasicBlock){
-		this.elm.appendChild(block.container);
+		this.elm.appendChild(block.containerElm);
 	}
 
 }
