@@ -1,45 +1,43 @@
 import { BlockView } from "./BlockView";
 import { BasicBlock } from "../blocks/BasicBlock";
 import { setIcon } from "obsidian";
+import { ListRow } from "./elements/ListRow";
+import { ListDataRow } from "./elements/ListDataRow";
+import { ListTitleRow } from "./elements/ListTitleRow";
 
-interface ListRow {
-	elm: HTMLElement;
-	bulletElm: HTMLElement;
-	iconElm: HTMLElement;
-	titleElm: HTMLElement;
-	tagsElm: HTMLElement;
-	optsElm: HTMLElement;
-	addOpts: ()=>void;
-	focus: ()=>void;
-}
+export type RowPositionSetting = 'after'|'before'|'top'|'bottom';
+export type RowLocationSetting = { row:ListRow,pos:RowPositionSetting };
 
 export class ListView extends BlockView {
 
 	body: HTMLElement;
 	addElm: HTMLElement;
+	maxIdentLevel: number = 7;
 
 	rows: ListRow[];
+	draggedRow: ListRow|null;
 	bullet: 'number'|'dash'|'bullet'|'alpha'|'icon';
+
+	listedRows: ListRow[];
+	firstListedRow: ListRow|null;
+	lastListedRow: ListRow|null;
 
 	constructor(block:BasicBlock) {
 		super(block);
 		this.bullet = 'dash';
 		this.body = this.viewContainer.createEl('div','nova-list-body');
-		this.addElm = this.viewContainer.createEl('div','nova-list-row nova-list-add');
+		this.addElm = this.viewContainer.createEl('div','nova-list-row-line nova-list-add');
 		/*/*/ setIcon(this.addElm.createEl('div','nova-list-row-bullet').createEl('div','nova-icon'),'plus');
 		/*/*/ this.addElm.createEl('div','nova-list-row-title').textContent = 'Add Row';
-		this.rows = [];
-		this.addRow('').focus();
+		/*/*/ this.addElm.addEventListener('click',()=>this.addNewRow.call(this));
 
-		/**TODO
-		 * Enter to add row bellow
-		 * Shift Enter to add row above
-		 * Tab to select next row
-		 * Shift Tab to select row before
-		 * Drag to move row
-		 * Ctrl T (inverse with shift) add title
-		 * Add row actually ads row
-		 */
+		this.firstListedRow = null;
+		this.lastListedRow = null;
+		this.listedRows = [];
+
+		this.rows = [];
+		this.draggedRow = null;
+		this.addRow('').focus();
 	}
 
 	setBullet(bullet:'number'|'dash'|'bullet'|'alpha'|'icon'){
@@ -47,37 +45,145 @@ export class ListView extends BlockView {
 		this.fixOrdering();
 	}
 
-	setData(data:(string|{title:string,icon?:string,tags?:string[]})[]){
+	clear(){
+		this.body.empty();
+		this.rows = [];
+		this.draggedRow = null;
+		this.listedRows = [];
+		this.firstListedRow = null;
+		this.lastListedRow = null;
+	}
+
+	setData(data:({title:string,icon?:string,attributes?:{},type?:string})[]){
+		this.clear();
 		for(let dataElm of data){
-			if(typeof dataElm === 'object') this.addRow(dataElm.title??dataElm,dataElm.icon,dataElm.tags);
-			else this.addRow(dataElm);
+			if(dataElm.title.trim()==='') continue;
+			if(dataElm.type&&dataElm.type==='title') this.addTitle(dataElm.title??dataElm);
+			else this.addRow(dataElm.title??dataElm,dataElm.icon,dataElm.attributes);
 		}
 	}
 
-	addRow(title:string,icon?:string,tags?:string[]):ListRow {
-		let elm = this.body.createEl('div','nova-list-row');
-		let bulletElm 	= elm.createEl('div','nova-list-row-bullet');
-		let iconElm 	= bulletElm.createEl('div','nova-list-row-icon nova-icon');
-		let titleElm 	= elm.createEl('input','nova-list-row-title nova-input');
-		let tagsElm 	= elm.createEl('div','nova-list-row-tags');
-		let optsElm 	= elm.createEl('div','nova-list-row-opts');
-		let addOpts = ()=>{};
-		let focus = ()=>{ titleElm.focus(); }
+	addRowTo(row:ListRow,pos?:RowPositionSetting,refRow?:ListRow){
+		let destination:ListRow|ListView = refRow??this;
+		let destInnerElm:HTMLElement = refRow ? refRow.listElm : this.body;
+		this.removeRowFrom(row,row.parentRow);
+		if(!pos) pos = 'after';
+		if(pos==='top'||(!refRow&&pos==='before')){
+			destInnerElm.insertBefore(row.elm,destination.firstListedRow ? destination.firstListedRow.elm : null);
+			if(destination.firstListedRow) destination.firstListedRow.previousRow = row;
+			destination.firstListedRow = row;
+			row.nextRow = destination.firstListedRow;
+		} else if(pos==='bottom'||(!refRow&&pos==='after')){
+			destInnerElm.insertAfter(row.elm,destination.lastListedRow ? destination.lastListedRow.elm : null);
+			if(destination.lastListedRow) destination.lastListedRow.nextRow = row;
+			destination.lastListedRow = row;
+			row.previousRow = destination.lastListedRow;
+		} else if(refRow){
+			let parent:ListRow|ListView = row.parentRow??this;
+			let parentInnerElm:HTMLElement = row.parentRow ? row.parentRow.listElm : this.body;
+			if(pos==='before'){
+				parentInnerElm.insertBefore(row.elm,refRow.elm);
+				row.nextRow = refRow;
+				row.previousRow = refRow.previousRow;
+				if(row.previousRow) row.previousRow.nextRow = row;
+				else parent.firstListedRow = row;
+				refRow.previousRow = row;
+			} else if(pos==='after'){
+				parentInnerElm.insertAfter(row.elm,refRow.elm);
+				row.previousRow = refRow;
+				row.nextRow = refRow.nextRow;
+				if(row.nextRow) row.nextRow.previousRow = row;
+				else parent.lastListedRow = row;
+				refRow.nextRow = row;
+			}
+		}
+	}
+	removeRowFrom(row:ListRow,parentRow?:ListRow|null){
+		let origin:ListRow|ListView = parentRow??row.parentRow??this;
+		let pRow = row.previousRow;
+		let nRow = row.nextRow;
+		if(nRow) nRow.previousRow = pRow??null;
+		else origin.lastListedRow = pRow;
+		if(pRow) pRow.nextRow = nRow??null;
+		else origin.firstListedRow = nRow;
+		for(let i = 0; i < origin.listedRows.length; i++){
+			let irow = origin.listedRows[i];
+			if(irow.elm.isSameNode(row.elm)){ origin.listedRows.splice(i,1); }
+		}
+		if(origin.listedRows.length===0){
+			origin.firstListedRow = null;
+			origin.lastListedRow = null;
+		}
+	}
 
-		iconElm.innerHTML = this.nextBullet();
-		titleElm.value = title;
-		if(tags) tagsElm.innerHTML = tags.map(tag=>"<div class='nova-list-tag'>"+ tag +"</div>").join('');
-		if(icon) setIcon(iconElm, icon);
+	removeRow(row:ListRow){
+		for(let i = 0; i < this.rows.length; i++){
+			let irow = this.rows[i];
+			if(irow.elm.isSameNode(row.elm)){
+				this.rows.splice(i,1);
+				row.elm.remove();
+			}
+		}
+	}
 
-		let row = { elm,bulletElm,iconElm,titleElm,tagsElm,optsElm,addOpts,focus };
-		this.rows.push(row);
+	addNewRow(location?:RowLocationSetting):ListDataRow {
+		let row = this.addRow('',undefined,undefined,location);
+		row.focus();
 		return row;
+	}
+	addRow(title:string,icon?:string,attributes?:{},location?:RowLocationSetting):ListDataRow {
+		let row = new ListDataRow(this);
+		row.setTitle(title);
+		if(icon) row.setIcon(icon);
+		if(attributes) row.setAttributes(attributes);
+		this.appendRowToList(row,location);
+		return row;
+	}
+
+	addNewTitle(location?:RowLocationSetting):ListTitleRow {
+		let row = this.addTitle('',location);
+		row.focus();
+		return row;
+	}
+	addTitle(title:string,location?:RowLocationSetting):ListTitleRow {
+		let row = new ListTitleRow(this);
+		row.setTitle(title);
+		this.appendRowToList(row,location);
+		return row;
+	}
+
+	appendRowToList(row:ListRow,location?:RowLocationSetting){
+		if(location){
+			if(location.pos==='before') this.body.insertBefore(row.elm,location.row.elm);
+			else this.body.insertAfter(row.elm,location.row.elm);
+		} else {
+			this.body.appendChild(row.elm);
+		}
+		this.rows.push(row);
+		row.setBullet(this.bullet,this.nextBullet());
+		row.addAllEvents();
+		return row;
+	}
+
+	getNextRow(row:ListRow):ListRow|null {
+		let elm = row.elm;
+		let nextElement = elm.nextElementSibling;
+		let nextRow = null;
+		for(let irow of this.rows){ if(irow.elm.isSameNode(nextElement)) nextRow = irow; }
+		return nextRow;
+	}
+	getPrevRow(row:ListRow):ListRow|null {
+		let elm = row.elm;
+		let prevElement = elm.previousElementSibling;
+		let prevRow = null;
+		for(let irow of this.rows){ if(irow.elm.isSameNode(prevElement)) prevRow = irow; }
+		return prevRow;
 	}
 
 	fixOrdering(){
 		for(let row of this.rows){
 			let index = Array.from(this.body.children).indexOf(row.elm);
-			if(this.bullet!=='icon') row.iconElm.innerHTML = this.nextBullet(index);
+			row.setBullet(this.bullet,this.nextBullet(index));
 		}
 	}
 	nextBullet(num?:number){
