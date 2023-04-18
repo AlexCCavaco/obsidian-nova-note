@@ -1,11 +1,16 @@
-import {setIcon, TFile} from "obsidian";
+import { CachedMetadata, CacheItem, TFile } from "obsidian";
 import { NovaView } from "../NovaView";
 import { Nova } from "../Nova";
 import NovaNotePlugin from "../main";
+import { getBlock } from "./Blocks";
 import { BasicBlock } from "./blocks/BasicBlock";
 import { ContentLine } from "./ContentLine";
 import { ContextMenu } from "./ContextMenu";
-import {AddBlock} from "./blocks/AddBlock";
+import { AddBlock } from "./blocks/AddBlock";
+import { randomCode } from "../tools/StringManipulator";
+import { BlockView } from "./layouts.bak/BlockView";
+import { BlockData, ContentData, handleBlockData, processBlockquote, processBreak, processCode, processFootnote, processList, processParagraph } from "../tools/MDContentHandler";
+import { ColumnBlock } from "./blocks/ColumnBlock";
 
 export class NovaContent {
 
@@ -19,6 +24,8 @@ export class NovaContent {
 	contentElm: HTMLElement;
 
 	contextMenu: ContextMenu;
+	sets: {}[];
+	views: { [key:string]:BlockView };
 	blocks: BasicBlock[];
 	addRow: AddBlock;
 
@@ -34,22 +41,14 @@ export class NovaContent {
 		this.titleElm.textContent = this.file.basename;
 		this.contentElm = this.containerElm.createEl('div','nova-content');
 
+		this.sets = [];
+		this.views = {};
 		this.blocks = [];
 
 		this.createContextMenu();
 		this.loadPluginSettings();
 
 		this.addRow = this.createAddBlock();
-
-		/**TODO
-		 * Create Context Menu to add Blocks
-		 * Create Different Blocks
-		 * Create Views and Styling
-		 * Handle Blocks Interactions
-		 * Allow Blocks to be Moved
-		 * Allow Blocks to be moved to sides and create collumns
-		 * Allow Blocks to be moves under blocks.old inside cols
-		 */
 	}
 
 	loadPluginSettings(){
@@ -68,7 +67,65 @@ export class NovaContent {
 		return block;
 	}
 
-	load(){}
+	load(meta:CachedMetadata,data:string[]){
+		let lastBlock:BasicBlock|null = null;
+		let cols:ColumnBlock[] = [];
+		if(meta.sections) for(let sec of meta.sections){
+			let secData = getDataAt(data,sec.position);
+			let content:ContentData|null = null;
+			switch(sec.type){
+				case 'paragraph': content = processParagraph(this,secData); break;
+				case 'list': content = processList(this,secData); break;
+				case 'blockquote': content = processBlockquote(this,secData); break;
+				case 'code': content = processCode(this,secData); break;
+				case 'thematicBreak': content = processBreak(this,secData); break;
+				case 'footnoteDefinition': content = processFootnote(this,secData); break;
+				case 'comment':
+					let commentBlocks:string[][] = [];
+					let lastIndex = 0;
+					let inComment = false;
+					for(let line of secData){
+						if(inComment){
+							if(line.includes('%%')){
+								line = line.replace('%%','');
+								commentBlocks[lastIndex].push(line);
+							} else {
+								commentBlocks[lastIndex].push(line);
+							}
+							continue;
+						}
+						if(line.indexOf('%%')===0){
+							inComment = true;
+							line = line.replace('%%','');
+							commentBlocks.push([]);
+							lastIndex = commentBlocks.length - 1;
+							commentBlocks[lastIndex].push(line);
+						}
+					}
+					for(let commentData of commentBlocks){
+						if(commentData.indexOf('nova-')===0){
+							let block = handleBlockData(this,commentData);
+							if(!block) continue;
+							if(block.type==='cbreak'){
+								//
+							}
+							if(block.type==='cend'){
+								//
+							}
+							lastBlock = getBlock(this,block);
+							if(!lastBlock) continue;
+							if(cols.length>0) cols[cols.length-1].addBlockToCurrent(lastBlock);
+							else this.addBlock(lastBlock);
+							if(lastBlock instanceof ColumnBlock){
+								cols.push(lastBlock);
+							}
+						}
+					}
+					break;
+			}
+			if(content&&lastBlock){ lastBlock.setContent(content); }
+		}
+	}
 	save(){}
 
 	addBlock(block:BasicBlock,calledFrom?:BasicBlock,clearAdd:boolean=true){
@@ -79,5 +136,24 @@ export class NovaContent {
 		this.blocks.push(block);
 		if(clearAdd) this.addRow.clear();
 	}
+	addBlockData(blockData:BlockData,contentData:string[]){
+		//
+	}
 
+	generateViewId(){
+		let code = null;
+		do{ code = randomCode(5); } while(this.views[code]);
+		return code;
+	}
+
+}
+
+function getDataAt(data:string[],position:CacheItem['position']):string[]{
+	let subData = [];
+	for(let i = position.start.line; i <= position.end.line; i++){
+		let iData = data[i];
+		if(iData.trim()==='') continue;
+		subData.push(data[i]);
+	}
+	return subData;
 }

@@ -1,5 +1,8 @@
 import { setIcon } from "obsidian";
-import {NovaContent} from "../NovaContent";
+import { NovaContent } from "../NovaContent";
+import { BlockData, ContentData } from "../../tools/MDContentHandler";
+import { BlockView } from "../layouts.bak/BlockView";
+import { ContentElm } from "../content/ContentElm";
 
 interface BlockOpts {
 	elm: HTMLElement;
@@ -9,6 +12,8 @@ interface BlockOpts {
 
 export class BasicBlock {
 
+	static blockname = 'basic';
+
 	novaC: NovaContent;
 	blockname: string;
 	savable: boolean;
@@ -17,9 +22,11 @@ export class BasicBlock {
 	optsElm: HTMLElement;
 	contentElm: HTMLElement;
 
+	opts: { [key:string]:any };
+
 	constructor(novaContent:NovaContent,blockName?:string,savable:boolean=true){
 		this.novaC = novaContent;
-		this.blockname = blockName??'basic';
+		this.blockname = blockName??BasicBlock.blockname;
 		this.savable = savable;
 		this.containerElm = document.createElement('div');
 		this.containerElm.classList.add('nova-block');
@@ -27,6 +34,8 @@ export class BasicBlock {
 
 		this.optsElm  = this.containerElm.createEl('div','nova-block-opts');
 		this.contentElm  = this.containerElm.createEl('div','nova-block-body');
+
+		this.opts = {};
 	}
 
 	addOption(name:string,icon:string,cb:()=>void):BlockOpts {
@@ -48,5 +57,15 @@ export class BasicBlock {
 		let opts = this.addOption('more','more-vertical',()=>{/*TODO*/})
 		/*TODO Event Listener for More*/
 	}
+
+	setOptions(options:{ [key:string]:any }){ this.opts = options; }
+	getOptions():{ [key:string]:any }{ return this.opts; }
+
+	setContent(data:ContentData){}
+	getContent():string[]{ return []; }
+
+	setViews(views:BlockData['views']){}
+
+	isEmpty():boolean { return true; }
 
 }

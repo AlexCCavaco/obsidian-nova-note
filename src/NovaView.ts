@@ -34,7 +34,8 @@ export class NovaView extends TextFileView {
 		let metadata = this.nova.getMetadata(this.file);
 		if(!metadata) return;
 
-		let content = new NovaContent(this);
+		let content = new NovaContent(this);console.log(metadata.sections);
+		content.load(metadata,this.dataArr);
 
 		// this.contentEl.empty();
 		// this.content = this.contentEl.createEl("div");
