@@ -7,9 +7,13 @@ export interface Settings {
 	folderFileName: string;
 	allowSameFolderName: boolean;
 	hideFolderNote: boolean;
-	/* NOVA NOTE */
+	/* BLOCKS */
+	handleNovaBlocks: boolean;
 	noteWidth: number;
 	noteWidthPercentage: boolean;
+	/* COMMANDS */
+	showCommands: boolean;
+	commandCallText: string;
 }
 
 export const DefaultSettings: Settings = {
@@ -19,8 +23,12 @@ export const DefaultSettings: Settings = {
 	allowSameFolderName: true,
 	hideFolderNote: true,
 	/* NOVA NOTE */
+	handleNovaBlocks: true,
 	noteWidth: 80,
 	noteWidthPercentage: true,
+	/* COMMANDS */
+	showCommands: true,
+	commandCallText: '/',
 }
 
 export class SettingsTab extends PluginSettingTab {

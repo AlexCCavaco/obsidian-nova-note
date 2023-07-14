@@ -1,7 +1,6 @@
-import { addIcon, App, CachedMetadata, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile, TFolder, WorkspaceLeaf } from 'obsidian';
-import { SettingsTab, DefaultSettings, Settings } from "./SettingsTab";
+import { addIcon, Plugin } from 'obsidian';
+import { SettingsTab, DefaultSettings, type Settings } from "./SettingsTab";
 import { Nova } from "./Nova";
-import { NovaView, VIEW_TYPE, VIEW_NAME, META_KEY } from "./NovaView";
 
 export const icon = 'nova';
 
@@ -17,38 +16,15 @@ export default class NovaNotePlugin extends Plugin {
 		this.addSettingTab(new SettingsTab(app, this));
 		this.nova = new Nova(this);
 
-		this.registerView(VIEW_TYPE,(leaf)=>new NovaView(leaf,this));
-		this.registerHoverLinkSource(META_KEY,{ display:'Nova Note',defaultMod:true });
+		if(this.settings.handleNovaBlocks) this.registerMarkdownCodeBlockProcessor("nova",this.nova.codeBlockProcessor);
 
-		// this.addRibbonIcon("package-plus", "Create Nova File",()=>{ this.nova.createFile(); });
-		this.addCommand({ id:"create-nova-file", name:"Create Nova File", callback:()=>this.nova.createFile() });
-		this.addCommand({ id:"toggle-nova-file", name:"Toggle Nova View", callback:()=>this.nova.toggleNova() });
-
-		app.workspace.on("file-open",(file)=>{ if(file && this.nova.isNovaFile(file)) this.nova.loadFile(file); });
-		app.workspace.on("file-menu",(menu, file, source, leaf)=>{
-			if(file===null) return;
-			if(file instanceof TFolder) {
-				menu.addItem((item) => {
-					item.setTitle('New Nova Note')
-						.setIcon(icon)
-						.onClick(()=>this.nova.createFile(file));
-				});
-				return;
-			}
-			if(file instanceof TFile && !this.nova.isNovaFile(file) && source==='sidebar-context-menu'){
-				menu.addItem((item) => {
-					item.setTitle('Open as Nova Note')
-						.setIcon(icon)
-						.onClick(()=>this.nova.convertToNova(file,true));
-				});
-				return;
-			}
+		app.workspace.on("file-open",(file)=>{
+			if(!file) return;
+			this.nova.load(file);
 		});
-		// app.workspace.on("active-leaf-change",(leaf:WorkspaceLeaf|null)=>{ if(leaf) this.nova.loadSpace(leaf); });
 	}
 
 	async onunload() {
-		this.app.workspace.detachLeavesOfType(VIEW_TYPE);
 		super.unload();
 	}
 
