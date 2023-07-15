@@ -24,6 +24,7 @@ export class Nova {
 	codeBlockProcessor(source:string, el:HTMLElement, ctx:MarkdownPostProcessorContext){
 		const elm = el.createEl('div','nova-block');
 		const nova = parse(source);
+		console.log(nova)
 	}
 
 }
