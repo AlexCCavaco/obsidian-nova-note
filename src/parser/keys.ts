@@ -1,14 +1,15 @@
-import { string, optWhitespace, regex, alt, Parser, seq, seqMap } from "parsimmon";
+import { string, optWhitespace, regex, alt, Parser, seq, seqMap, lazy, whitespace } from "parsimmon";
 
-export type VAL_TYPE =
-    { type:'array',value:Array<unknown> } |
-    { type:'fn',name:string,params:Array<unknown> } |
-    { type:'string',value:string };
+export type VAL_TYPE = { type:string,value:unknown } & (
+    { type:'array',value:unknown[] } |
+    { type:'fn',value:[string,unknown[]] } |
+    { type:'string',value:string } |
+    { type:'number',value:number } |
+    { type:'tag',value:string } ) |
+    boolean | null;
 
-export const keyed = (parser:Parser<any>)=>parser.skip(optWhitespace);
-
-export const literal    = ()=>alt(TRUE, FALSE, NUMBER, DECIMAL, WORD, fn(), array());
-export const listed     = (parser:Parser<any>,seperator=',')=>parser.sepBy(string(seperator).skip(optWhitespace));
+export const keyed      = <T>(parser:Parser<T>):Parser<T>=>parser.skip(optWhitespace);
+export const listed     = <T>(parser:Parser<T>,seperator=','):Parser<T[]>=>parser.sepBy(string(seperator).skip(optWhitespace));
 
 export const LPAREN     = keyed(string('('));
 export const RPAREN     = keyed(string(')'));
@@ -19,16 +20,17 @@ export const RBRACK     = keyed(string(']'));
 export const SQUOTE     = keyed(string('\''));
 export const DQUOTE     = keyed(string('"'));
 
-export const NUMBER     = keyed(regex(/\d+/));
-export const DECIMAL    = keyed(regex(/\d+\.\d+/));
+export const NUMBER     = keyed(regex(/\d+/)).map(parseInt);
+export const DECIMAL    = keyed(regex(/\d+\.\d+/)).map(parseFloat);
+export const NUMERIC    = NUMBER.or(DECIMAL).map((value):VAL_TYPE=>({ value,type:'number' }));
 
-export const WORD       = keyed(regex(/\w+/));
-export const UWORD      = keyed(regex(/\w+/u));
-export const STRING     = regex(/"(.*?)"|'(.*?)'/).skip(optWhitespace).map((value):VAL_TYPE=>({ value,type:'string' }));
-export const WORDQ      = WORD.or(STRING);
+export const WORD       = keyed(regex(/[\w_/.]+/));
+export const UWORD      = keyed(regex(/[\w_/.]+/u));
+export const STRING     = regex(/"(.*?)"|'(.*?)'/).map(str=>str.substring(1,str.length-1)).skip(optWhitespace);
+export const SWORD      = WORD.or(STRING);
+export const STRING_VAL = lazy(():Parser<VAL_TYPE>=>SWORD.map((value):VAL_TYPE=>({ value,type:'string' })));
 
-export const array      = ():Parser<VAL_TYPE>=>LBRACK.then(listed(literal())).skip(RBRACK).map((value)=>({ type:'array',value }));
-export const fn         = ():Parser<VAL_TYPE>=>seqMap(WORD,LPAREN.then(listed(literal())).skip(RPAREN),(name,params)=>({ type:'fn',name,params }));
+export const TAG        = lazy(():Parser<VAL_TYPE>=>keyed(string('#').then(UWORD)).map(value=>({ type:'tag',value })));
 
 export const PLUS       = keyed(string('+'));
 export const MINUS      = keyed(string('-'));
@@ -38,21 +40,47 @@ export const DIVIDE     = keyed(string('/'));
 export const EQUAL      = keyed(string('='));
 export const DIFFERENT  = keyed(string('!='));
 
-export const AND        = keyed(regex(/AND/i)).result('and');
-export const OR         = keyed(regex(/OR/i)).result('false');
-export const NEGATE     = keyed(regex(/NOT/i)).result('not');
+export const GREATER    = keyed(string('>'));
+export const GREATER_EQ = keyed(string('>='));
+export const LESSER     = keyed(string('<'));
+export const LESSER_EQ  = keyed(string('<='));
+export const COMPARE    = alt(GREATER,GREATER_EQ,LESSER,LESSER_EQ);
 
-export const TRUE       = keyed(regex(/TRUE/i)).result(true);
-export const FALSE      = keyed(regex(/FALSE/i)).result(false);
+export const AND        = keyed(regex(/AND/i).desc('AND').skip(whitespace)).result('and');
+export const OR         = keyed(regex(/OR/i).desc('OR').skip(whitespace)).result('or');
+export const NOT        = keyed(regex(/NOT/i).desc('NOT').skip(whitespace)).result('not');
 
-export type OPR_TYPE = { lhs:unknown,op:string,rhs:unknown };
-const mapExpressions = (lhs:unknown,op:string,rhs:unknown):OPR_TYPE=>({ lhs,op,rhs });
+export const IN         = keyed(regex(/IN/i).desc('IN').skip(whitespace)).result('in');
+export const LOGIC      = AND.or(OR).or(IN).or(NOT.then(IN).result('nin'));
 
-export function expression():Parser<OPR_TYPE>{ return expression.equality() }
+export const TRUE       = keyed(regex(/TRUE/i).desc('true').skip(whitespace)).result(true);
+export const FALSE      = keyed(regex(/FALSE/i).desc('false').skip(whitespace)).result(false);
+export const NULL       = keyed(regex(/NULL/i).desc('null').skip(whitespace)).result(null);
 
-expression.primary          = ():Parser<unknown>=>seq(LPAREN.then(expression()).skip(RPAREN)).or(literal())
-                                    .or( MINUS.then(expression.primary()).map(expr=>({ expr,negative:true })))
-                                    .or(NEGATE.then(expression.primary()).map(expr=>({ expr,negate:true })));
-expression.multiplicative   = ():Parser<OPR_TYPE>=>seqMap(expression.primary(), MULTIPLY.or(DIVIDE), expression.primary(),mapExpressions);
-expression.additive         = ():Parser<OPR_TYPE>=>seqMap(expression.multiplicative(), PLUS.or(MINUS), expression.multiplicative(),mapExpressions);
-expression.equality         = ():Parser<OPR_TYPE>=>seqMap(expression.additive(), EQUAL.or(DIFFERENT), expression.additive(),mapExpressions);
+export const ARRAY      = lazy(():Parser<VAL_TYPE>=>LBRACK.then(listed(LITERAL)).skip(RBRACK).map((value)=>({ type:'array',value })));
+export const FN         = lazy(():Parser<VAL_TYPE>=>seqMap(WORD,LPAREN.then(listed(LITERAL)).skip(RPAREN),(name,params)=>({ type:'fn',value:[name,params] })));
+export const LITERAL    = lazy(():Parser<VAL_TYPE>=>alt(TRUE, FALSE, NULL, TAG, NUMERIC, STRING_VAL, FN, ARRAY));
+
+
+export type OPR_TYPE = { lhs?:OPR_TYPE,op:string,rhs:OPR_TYPE } | VAL_TYPE;
+const mapExpressions = (str:OPR_TYPE,data:[op:string,rhs:OPR_TYPE][]):OPR_TYPE=>{
+    if(data.length===0) return str;
+    let res:OPR_TYPE = str;
+    for(const [op,value] of data){
+        const obj:OPR_TYPE = { lhs:res,op,rhs:value };
+        res = obj;
+    }
+    return res;
+};
+
+export const EXPRESSION     = lazy(():Parser<OPR_TYPE>=>LOGICAL);
+
+export const PRIMARY        = lazy(():Parser<OPR_TYPE>=>LPAREN.then(EXPRESSION).skip(RPAREN)
+                                    .or(MINUS.then(PRIMARY).map(rhs=>({ op:'-',rhs } as OPR_TYPE)))
+                                    .or(  NOT.then(PRIMARY).map(rhs=>({ op:'!',rhs } as OPR_TYPE)))
+                                    .or(LITERAL) );
+export const MULTIPLICATIVE = lazy(():Parser<OPR_TYPE>=>seqMap(PRIMARY, seq(MULTIPLY.or(DIVIDE), PRIMARY).many(), mapExpressions));
+export const ADDITIVE       = lazy(():Parser<OPR_TYPE>=>seqMap(MULTIPLICATIVE, seq(PLUS.or(MINUS), MULTIPLICATIVE).many(), mapExpressions));
+export const EQUALITY       = lazy(():Parser<OPR_TYPE>=>seqMap(ADDITIVE, seq(EQUAL.or(DIFFERENT), ADDITIVE).many(), mapExpressions));
+export const COMPARATIVE    = lazy(():Parser<OPR_TYPE>=>seqMap(EQUALITY, seq(COMPARE, EQUALITY).many(), mapExpressions));
+export const LOGICAL        = lazy(():Parser<OPR_TYPE>=>seqMap(COMPARATIVE, seq(LOGIC, COMPARATIVE).many(), mapExpressions));

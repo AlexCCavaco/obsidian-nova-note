@@ -1,9 +1,10 @@
+import type { OPR_TYPE } from "src/parser/keys";
 
 export type DISPLAY_TYPE = 'tasks' | 'data';
 export const displayData = ['tasks','data'];
 export function isDisplay(data:string): data is DISPLAY_TYPE { return displayData.includes(data.toLowerCase()); }
 
-export type FROM_TYPE = { type: 'tag'|'resource'|'all'|'local'|'path', value:unknown };
+export type FROM_TYPE = { type:'tag'|'resource'|'all'|'local'|'path', value:string|null };
 export function formatFrom(data:string):FROM_TYPE{
     const fChar = data[0]??'';
     switch(fChar){
@@ -24,3 +25,20 @@ export function formatView(data:string):VIEW_TYPE{
         default: return 'list';
     }
 }
+
+export type BLOCK_TYPE = { block:string } & (
+    ( { block:'column' } & ({ type:'start'|'break',width:number } | { type:'end' }) ) |
+    { block:'display',type?:'tasks'|'data',clauses:DISPLAY_CLAUSE_TYPE[] } );
+
+export type DISPLAY_CLAUSE_TYPE =
+    { clause:'from',source:FROM_TYPE['type'],value:FROM_TYPE['value'] } |
+    { clause:'on',on:OPR_TYPE } |
+    { clause:'focus',focus:string } |
+    { clause:'view',type:VIEW_TYPE,id:string,label:string,clauses:VIEW_CLAUSE_TYPE[] };
+
+export type VIEW_CLAUSE_TYPE =
+    { clause:'order',order:{ key:string,desc?:boolean }[] } |
+    { clause:'group',group:string[] } |
+    { clause:'alter',alter:{ lhs:string,rhs:string }[] } |
+    { clause:'shows',shows:{ key:string,label?:string }[] } |
+    { clause:'where',where:OPR_TYPE };

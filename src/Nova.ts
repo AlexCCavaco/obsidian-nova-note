@@ -1,6 +1,7 @@
 import { type MarkdownPostProcessorContext, TFile } from "obsidian";
 import NovaNotePlugin from "./main";
 import parse from "./parser";
+import { handleBlockData } from "./blocks";
 
 export class Nova {
 
@@ -22,9 +23,9 @@ export class Nova {
 	handleContext(file:TFile){}
 
 	codeBlockProcessor(source:string, el:HTMLElement, ctx:MarkdownPostProcessorContext){
-		const elm = el.createEl('div','nova-block');
-		const nova = parse(source);
-		console.log(nova)
+		const sec = el.createEl('div','nova-sec');
+		const data = parse(source);
+		handleBlockData(sec,data);
 	}
 
 }

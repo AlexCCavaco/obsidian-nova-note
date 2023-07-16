@@ -1,12 +1,13 @@
 import { Parser, regex, seqMap, sepBy, alt, string, optWhitespace, whitespace } from "parsimmon";
-import { NUMBER, WORD, STRING, WORDQ, expression, listed } from "./keys";
+import { NUMBER, WORD, STRING, SWORD, EXPRESSION, listed } from "./keys";
+import type { BLOCK_TYPE, DISPLAY_CLAUSE_TYPE, VIEW_CLAUSE_TYPE } from "src/blocks/definitions";
 
-const clearSpaces = (parser:Parser<any>)=>optWhitespace.then(parser).skip(optWhitespace);
+const clearSpaces = <T>(parser:Parser<T>):Parser<T>=>optWhitespace.then(parser).skip(optWhitespace);
 const clearSpacedString = (val:string)=>clearSpaces(string(val));
 
 const key = (reg:RegExp)=>regex(reg).skip(whitespace);
 
-const opt = (parser:Parser<any>)=>parser.times(0,1).map(res=>(res.length===0 ? null : res[0]));
+const opt = <T>(parser:Parser<T>):Parser<T|null>=>parser.times(0,1).map(res=>(res.length===0 ? null : res[0]));
 
 /*/ COLUMN /*/
 const columnHandler = seqMap(
@@ -16,7 +17,7 @@ const columnHandler = seqMap(
         seqMap(key(/BREAK/i),NUMBER,(_tp,width)=>({ type:'break',width })),
         key(/END/i).map(()=>({ type:'end',width:null }))
     ),
-    (_col,{ type,width })=>({ block:'column',type,width })
+    (_col,{ type,width })=>({ block:'column',type,width } as BLOCK_TYPE)
 );
 
 /*/ VIEWS /*/
@@ -24,49 +25,48 @@ const viewHandler = seqMap(
     key(/LIST|TABLE|BOARDS|GALLERY|TIMELINE|CALENDAR/i),
     WORD, STRING, alt(
         seqMap(
-            key(/ORDER/i), listed(seqMap(WORDQ,opt(key(/DESC|ASC/i)),(key,dsc)=>({ key,desc:(dsc.toLowerCase()==='desc') }))),
-            (_,order)=>({ struct:'order',order })
+            key(/ORDER/i), listed(seqMap(SWORD,opt(key(/DESC|ASC/i)),(key,oType)=>({ key,desc:(oType?(oType.toLowerCase()==='desc'):false) }))),
+            (_,order)=>({ clause:'order',order } as VIEW_CLAUSE_TYPE)
         ),
         seqMap(
-            key(/GROUP/i), listed(WORDQ),
-            (_,group)=>({ struct:'group',group })
+            key(/GROUP/i), listed(SWORD),
+            (_,group)=>({ clause:'group',group } as VIEW_CLAUSE_TYPE)
         ),
         seqMap(
             key(/ALTER/i),
-            listed(seqMap(WORD,clearSpacedString('='),WORDQ,(lh,_,rh)=>({ lh,rh }))),
-            (_,alter)=>({ struct:'alter',alter })
+            listed(seqMap(WORD,clearSpacedString('='),SWORD,(lhs,_,rhs)=>({ lhs,rhs }))),
+            (_,alter)=>({ clause:'alter',alter } as VIEW_CLAUSE_TYPE)
         ),
         seqMap(
             key(/SHOWS/i),
-            listed(seqMap(WORD,opt(regex(/AS/i).skip(whitespace).then(WORDQ)),(key,value)=>({ key,value }))),
-            (_,shows)=>({ struct:'shows',shows })
+            listed(seqMap(WORD,opt(regex(/AS/i).skip(whitespace).then(SWORD)),(key,value)=>({ key,value }))),
+            (_,shows)=>({ clause:'shows',shows } as VIEW_CLAUSE_TYPE)
         ),
         seqMap(
-            key(/WHERE/i),
-            expression(),
-            (_,where)=>({ struct:'where',where })
+            key(/WHERE/i), EXPRESSION,
+            (_,where)=>({ clause:'where',where } as VIEW_CLAUSE_TYPE)
         )
-    ),
-    (type,id,label,structs)=>({ type:type.toLocaleLowerCase(),id,label,structs })
+    ).many(),
+    (type,id,label,clauses)=>({ clause:'view',type:type.toLowerCase(),id,label,clauses } as DISPLAY_CLAUSE_TYPE)
 );
 
 /*/ DISPLAY /*/
 const displayHandler = seqMap(
     key(/DISPLAY/i),
-    opt(key(/TASKS|DATA/i)),
+    opt(key(/TASKS|DATA/i).map(v=>v.toLowerCase())),
     alt(
         seqMap(key(/FROM/i),alt(
             seqMap(string('*').skip(whitespace),()=>({ source:'all',value:null })),
             seqMap(string('#'),WORD,(_,value)=>({ source:'tag',value })),
             seqMap(string('@'),WORD,(_,value)=>({ source:'resource',value })),
-            seqMap(string('^'),WORD,(_,value)=>({ source:'locale',value })),
-            seqMap(WORDQ,(value)=>({ source:'path',value }))
-        ),(_f,{ source,value })=>({ struct:'from',source,value })),
-        seqMap(key(/ON/i),expression(),(_,data)=>({ struct:'on',data })),
-        seqMap(key(/FOCUS/i),WORD,(_f,focus)=>({ struct:'focus',focus })),
-        seqMap(key(/VIEW/i),viewHandler.many(),(_v,views)=>({ struct:'view',views }))
-    ),
-    (_dis,type,structs)=>({ block:'display',type,structs })
+            seqMap(string('^'),WORD,(_,value)=>({ source:'local',value })),
+            seqMap(SWORD,(value)=>({ source:'path',value }))
+        ),(_f,{ source,value })=>({ clause:'from',source,value } as DISPLAY_CLAUSE_TYPE)),
+        seqMap(key(/ON/i),EXPRESSION,(_,on)=>({ clause:'on',on } as DISPLAY_CLAUSE_TYPE)),
+        seqMap(key(/FOCUS/i),WORD,(_f,focus)=>({ clause:'focus',focus } as DISPLAY_CLAUSE_TYPE)),
+        seqMap(key(/VIEW/i),viewHandler,(_v,view)=>view)
+    ).many(),
+    (_dis,type,clauses)=>({ block:'display',type,clauses } as BLOCK_TYPE)
 );
 
 /*/ BASE /*/
