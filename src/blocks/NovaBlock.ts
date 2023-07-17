@@ -1,22 +1,29 @@
 import type { DISPLAY_TYPE, FROM_TYPE, VIEW_CLAUSE_TYPE, VIEW_TYPE } from "./definitions";
 import Block from "./components/Block.svelte";
-import type { OPR_TYPE } from "src/parser/keys";
+import type { OPR_TYPE } from "src/parser";
 import NovaView from "./NovaView";
+import { writable, type Writable } from "svelte/store";
+import type NovaNotePlugin from "src/main";
+import { loadFromAll, loadFromLocal, loadFromPath, loadFromResource, loadFromTag } from "./dataLoader";
+
+export type BLOCK_DATA = {[key:string]:unknown}[];
 
 export default class {
 
     elm:  HTMLElement;
     head: HTMLElement;
     body: HTMLElement;
-    component: Block;
+    component:  Block;
+    nova: NovaNotePlugin;
 
-    type: DISPLAY_TYPE;
-    from: FROM_TYPE;
-    focus: string|null;
-    on: OPR_TYPE;
-    views: NovaView[];
+    type:   DISPLAY_TYPE;
+    from:   FROM_TYPE;
+    focus:  Writable<string|null>;
+    on:     OPR_TYPE;
+    views:  NovaView[];
+    data:   Writable<BLOCK_DATA>;
 
-    constructor(){
+    constructor(nova:NovaNotePlugin){
         this.elm = document.createElement('div');
         this.elm.classList.add('nova-block');
         this.head = document.createElement('div');
@@ -25,18 +32,20 @@ export default class {
         this.body = document.createElement('div');
         this.body.classList.add('nova-block-body');
         this.elm.appendChild(this.body);
+        this.nova = nova;
         /*/===/*/
-        this.type  = 'data';
-        this.from  = { type:"all",value:null };
-        this.focus = null;
-        this.on    = true;
-        this.views = [];
+        this.type   = 'data';
+        this.from   = { type:'all' };
+        this.focus  = writable(null);
+        this.on     = true;
+        this.views  = [];
+        this.data   = writable([]);
     }
 
-    setType(type?:DISPLAY_TYPE){ this.type = type ?? 'data'; }
-    setFrom(from:FROM_TYPE){ this.from = from; }
-    setFocus(focus:string){ this.focus = focus; }
-    setOn(on:OPR_TYPE){ this.on = on; }
+    setType(type?:DISPLAY_TYPE){ this.type = type ?? 'data'; this.setData('type'); }
+    setFrom(from:FROM_TYPE){ this.from = from; this.setData(); }
+    setFocus(focus:string){ this.focus.set(focus); }
+    setOn(on:OPR_TYPE){ this.on = on; this.setData('on'); }
 
     addView(type:VIEW_TYPE,code:string,label:string,clauses:VIEW_CLAUSE_TYPE[]){
         const view = new NovaView(type,code,label);
@@ -62,5 +71,18 @@ export default class {
             }
         });
     }
+
+    setData(changed?:'type'|'on'){
+        let data:BLOCK_DATA = [];
+        switch(this.from.type){
+            case "tag": data = loadFromTag(this.nova,this.from.value,this.on); break;
+            case "resource": data = loadFromResource(this.nova,this.from.value,this.on); break;
+            case "all": data = loadFromAll(this.nova,this.on); break;
+            case "local": data = loadFromLocal(this.nova,this.from.value,this.on); break;
+            case "path": data = loadFromPath(this.nova,this.from.value,this.on); break;
+        }console.log('>>',data);
+        this.data.set(data);
+    }
+    onDataChange(){}
 
 }

@@ -1,4 +1,4 @@
-import type { OPR_TYPE } from "src/parser/keys";
+import type { OPR_TYPE } from "src/parser";
 import View from "./components/View.svelte";
 import type { VIEW_TYPE } from "./definitions";
 

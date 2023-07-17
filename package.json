@@ -7,7 +7,7 @@
 		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"version": "node version-bump.mjs && git add manifest.json versions.json",
-		"watch": "nodemon --exec \"npm run build\" -w \".\\src\\*\" -e \"ts,js,json\""
+		"watch": "nodemon --exec \"npm run build\" -w \".\\src\\*\" -e \"ts,js,json,svelte\""
 	},
 	"keywords": [],
 	"author": "",
@@ -23,19 +23,13 @@
 		"esbuild-svelte": "^0.7.4",
 		"file": "^0.2.2",
 		"file-loader": "^6.2.0",
-		"hypermd": "^0.3.11",
 		"npm-watch": "^0.11.0",
 		"obsidian": "latest",
+		"parsimmon": "^1.18.1",
 		"svelte": "^4.0.5",
 		"svelte-preprocess": "^5.0.4",
 		"tslib": "2.4.0",
-		"typescript": "^5.0.0"
-	},
-	"dependencies": {
-		"@types/marked": "^4.0.8",
-		"dompurify": "^3.0.1",
-		"marked": "^4.3.0",
-		"parsimmon": "^1.18.1",
+		"typescript": "^5.0.0",
 		"uuid": "^9.0.0"
 	}
 }

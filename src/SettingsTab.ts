@@ -11,6 +11,8 @@ export interface Settings {
 	handleNovaBlocks: boolean;
 	noteWidth: number;
 	noteWidthPercentage: boolean;
+	/* RESOURCES */
+	enableResources: boolean;
 	/* COMMANDS */
 	showCommands: boolean;
 	commandCallText: string;
@@ -26,6 +28,8 @@ export const DefaultSettings: Settings = {
 	handleNovaBlocks: true,
 	noteWidth: 80,
 	noteWidthPercentage: true,
+	/* RESOURCES */
+	enableResources: true,
 	/* COMMANDS */
 	showCommands: true,
 	commandCallText: '/',
@@ -40,7 +44,7 @@ export class SettingsTab extends PluginSettingTab {
 	}
 
 	display(): void {
-		let { containerEl } = this;
+		const { containerEl } = this;
 		containerEl.empty();
 
 		/* FOLDER NOTE */
@@ -101,11 +105,11 @@ export class SettingsTab extends PluginSettingTab {
 				txt .setPlaceholder("_main")
 					.setValue(this.plugin.settings.noteWidth.toString() + (this.plugin.settings.noteWidthPercentage?'%':''))
 					.onChange(async (value) => {
-						let percentageIndex = value.indexOf('%');
+						const percentageIndex = value.indexOf('%');
 						if(percentageIndex>=0&&percentageIndex!==(value.length-1)) return this.clearTextValue(txt,prevNoteWidthValue);
 						value = value.replace('%','');
 						if(Number.isNaN(value)||Number.isNaN(Number.parseInt(value))) return this.clearTextValue(txt,prevNoteWidthValue);
-						let nVal = Number.parseInt(value);
+						const nVal = Number.parseInt(value);
 						if(nVal<0) return this.clearTextValue(txt,prevNoteWidthValue);
 						prevNoteWidthValue = this.plugin.settings.noteWidth = nVal;
 						txt.setValue(this.plugin.settings.noteWidth.toString() + (percentageIndex>0 ? '%' : ''));

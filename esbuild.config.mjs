@@ -40,19 +40,9 @@ const context = await esbuild.context({
 	sourcemap: prod ? false : "inline",
 	treeShaking: true,
 	outfile: "main.js",
-	loader: {
-		'.eot': 'file',
-		'.woff': 'file',
-		'.woff2': 'file',
-		'.svg': 'file',
-		'.ttf': 'file',
-		'.png':'file',
-		'.gif':'file',
-	},
-	assetNames: "assets/[name]",
 	plugins: [
 		esbuildSvelte({
-			compilerOptions: { css: true },
+			compilerOptions: { css: 'injected' },
 			preprocess: sveltePreprocess(),
 		}),
 	],
