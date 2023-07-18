@@ -8,7 +8,7 @@ export type VAL_TYPE = { type:string,value:unknown } & (
     { type:'number',value:number } |
     { type:'tag',value:string } ) |
     boolean | null;
-export function isOfValType(data:OPR_TYPE):data is VAL_TYPE{ return !(typeof data === 'object' || data.hasOwnProperty('op')); }
+export function isOfValType(data:OPR_TYPE):data is VAL_TYPE{ return !(data!= null && typeof data === 'object' && data.hasOwnProperty('op')); }
 export type OBJ_VAL_TYPE = Exclude<VAL_TYPE,null|boolean>
 export function isObjValType(data:VAL_TYPE):data is OBJ_VAL_TYPE{ return !(typeof data === 'boolean' || data == null); }
 
@@ -33,8 +33,8 @@ export const NUMBER     = keyed(regex(/\d+/)).map(parseInt);
 export const DECIMAL    = keyed(regex(/\d+\.\d+/)).map(parseFloat);
 export const NUMERIC    = NUMBER.or(DECIMAL).map((value):VAL_TYPE=>({ value,type:'number' }));
 
-export const WORD       = keyed(regex(/[\w_/.]+/));
-export const UWORD      = keyed(regex(/[\w_/.]+/u));
+export const WORD       = keyed(regex(/[\w_/.\-$]+/));
+export const UWORD      = keyed(regex(/[\w_/.\-$]+/u));
 export const STRING     = regex(/"(.*?)"|'(.*?)'/).map(str=>str.substring(1,str.length-1)).skip(optWhitespace);
 export const SWORD      = WORD.or(STRING);
 export const STRING_VAL = lazy(():Parser<VAL_TYPE>=>WORD.map((value):VAL_TYPE=>({ value,type:'key' })).or(STRING.map((value):VAL_TYPE=>({ value,type:'string' }))));

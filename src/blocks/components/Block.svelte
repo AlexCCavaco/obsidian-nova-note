@@ -13,7 +13,7 @@
         'timeline': icon.Timeline,
         'calendar': icon.Calendar
     };
-    const focus = block.focus;console.log($focus,block.views.map(view=>view.id));
+    const focus = block.focus;
     const open = (view:NovaView)=>()=>{block.setFocus(view.id)};
 </script>
 

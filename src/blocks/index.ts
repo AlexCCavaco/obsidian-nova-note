@@ -1,7 +1,7 @@
 import NovaBlock from "./NovaBlock";
 import NovaCol from "./NovaCol";
 import type { BLOCK_TYPE } from "./definitions";
-import type { MarkdownPostProcessorContext } from "obsidian";
+import { type MarkdownPostProcessorContext } from "obsidian";
 import parse from "./parser";
 import type NovaNotePlugin from "src/main";
 
@@ -31,7 +31,7 @@ export function handleBlockData(nova:NovaNotePlugin,parentElm:HTMLElement,data:B
     }
     
     function handleDisplay(data:Extract<BLOCK_TYPE,{ block:'display' }>){
-        const block = new NovaBlock(nova);console.log(data);
+        const block = new NovaBlock(nova);
         block.setType(data.type??'data');
         for(const clause of data.clauses){
             switch(clause.clause){

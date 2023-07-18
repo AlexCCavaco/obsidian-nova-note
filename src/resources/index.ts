@@ -51,7 +51,6 @@ export function updateResources(resourcesData:ResourceList,file:TFile){
         } else {
             resources[key].update(cols);
         }
-        console.info(`Loaded Resource "${key}"`);
     }
 }
 

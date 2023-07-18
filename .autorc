@@ -1,0 +1,6 @@
+{
+    "onlyPublishWithReleaseLabel" = true,
+    "plugins" = [
+      [ "obsidian", { "dir":"./src" } ]
+    ]
+}

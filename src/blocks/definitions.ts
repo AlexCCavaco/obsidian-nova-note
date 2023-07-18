@@ -39,6 +39,6 @@ export type DISPLAY_CLAUSE_TYPE =
 export type VIEW_CLAUSE_TYPE =
     { clause:'order',order:{ key:string,desc?:boolean }[] } |
     { clause:'group',group:string[] } |
-    { clause:'alter',alter:{ lhs:string,rhs:string }[] } |
-    { clause:'shows',shows:{ key:string,label?:string }[] } |
+    { clause:'alter',alter:{ lhs:string,rhs:OPR_TYPE }[] } |
+    { clause:'shows',shows:{ key:OPR_TYPE,label?:string }[] } |
     { clause:'where',where:OPR_TYPE };

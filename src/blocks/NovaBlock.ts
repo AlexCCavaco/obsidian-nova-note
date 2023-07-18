@@ -4,9 +4,10 @@ import type { OPR_TYPE } from "src/parser";
 import NovaView from "./NovaView";
 import { writable, type Writable } from "svelte/store";
 import type NovaNotePlugin from "src/main";
-import { loadFromAll, loadFromLocal, loadFromPath, loadFromResource, loadFromTag } from "./dataLoader";
+import { loadFromAll, loadFromLocal, loadFromPath, loadFromResource, loadFromTag, type FileData, getCurFileData } from "./dataLoader";
 
-export type BLOCK_DATA = {[key:string]:unknown}[];
+export type BlockDataElm = (FileData & { data:{[key:string]:unknown} });
+export type BlockData = BlockDataElm[];
 
 export default class {
 
@@ -21,17 +22,12 @@ export default class {
     focus:  Writable<string|null>;
     on:     OPR_TYPE;
     views:  NovaView[];
-    data:   Writable<BLOCK_DATA>;
+    data:   Writable<BlockData>;
+    file:   FileData;
 
     constructor(nova:NovaNotePlugin){
         this.elm = document.createElement('div');
         this.elm.classList.add('nova-block');
-        this.head = document.createElement('div');
-        this.head.classList.add('nova-block-head');
-        this.elm.appendChild(this.head);
-        this.body = document.createElement('div');
-        this.body.classList.add('nova-block-body');
-        this.elm.appendChild(this.body);
         this.nova = nova;
         /*/===/*/
         this.type   = 'data';
@@ -40,15 +36,16 @@ export default class {
         this.on     = true;
         this.views  = [];
         this.data   = writable([]);
+        this.file   = getCurFileData(nova);
     }
 
-    setType(type?:DISPLAY_TYPE){ this.type = type ?? 'data'; this.setData('type'); }
-    setFrom(from:FROM_TYPE){ this.from = from; this.setData(); }
+    setType(type?:DISPLAY_TYPE){ this.type = type ?? 'data'; }
+    setFrom(from:FROM_TYPE){ this.from = from; }
     setFocus(focus:string){ this.focus.set(focus); }
-    setOn(on:OPR_TYPE){ this.on = on; this.setData('on'); }
+    setOn(on:OPR_TYPE){ this.on = on; }
 
     addView(type:VIEW_TYPE,code:string,label:string,clauses:VIEW_CLAUSE_TYPE[]){
-        const view = new NovaView(type,code,label);
+        const view = new NovaView(this,type,code,label);
         for(const clause of clauses){
             switch(clause.clause){
                 case "order": view.setOrder(clause.order); break;
@@ -58,7 +55,7 @@ export default class {
                 case "where": view.setWhere(clause.where); break;
             }
         }
-        this.body.appendChild(view.elm);
+        this.elm.appendChild(view.elm);
         this.views.push(view);
         return view;
     }
@@ -70,19 +67,24 @@ export default class {
                 block: this
             }
         });
+        this.loadData();
     }
 
-    setData(changed?:'type'|'on'){
-        let data:BLOCK_DATA = [];
-        switch(this.from.type){
-            case "tag": data = loadFromTag(this.nova,this.from.value,this.on); break;
-            case "resource": data = loadFromResource(this.nova,this.from.value,this.on); break;
-            case "all": data = loadFromAll(this.nova,this.on); break;
-            case "local": data = loadFromLocal(this.nova,this.from.value,this.on); break;
-            case "path": data = loadFromPath(this.nova,this.from.value,this.on); break;
-        }console.log('>>',data);
+    loadData(){
+        const data:BlockData = loadData(this.nova,this.from,this.on);
         this.data.set(data);
     }
     onDataChange(){}
 
+}
+
+function loadData(nova:NovaNotePlugin,from:FROM_TYPE,on:OPR_TYPE):BlockData{
+    switch(from.type){
+        case "tag":      return loadFromTag(nova,from.value,on);
+        case "resource": return loadFromResource(nova,from.value,on);
+        case "all":      return loadFromAll(nova,on);
+        case "local":    return loadFromLocal(nova,from.value,on);
+        case "path":     return loadFromPath(nova,from.value,on);
+    }
+    return [];
 }

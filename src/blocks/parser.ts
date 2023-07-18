@@ -1,6 +1,6 @@
 import { Parser, regex, seqMap, sepBy, alt, string, optWhitespace, whitespace } from "parsimmon";
 import { NUMBER, WORD, STRING, SWORD, EXPRESSION, listed, W_EOF, opt } from "../parser";
-import type { BLOCK_TYPE, DISPLAY_CLAUSE_TYPE, VIEW_CLAUSE_TYPE } from "src/blocks/definitions";
+import type { BLOCK_TYPE, DISPLAY_CLAUSE_TYPE, FROM_TYPE, VIEW_CLAUSE_TYPE } from "src/blocks/definitions";
 
 const clearSpaces = <T>(parser:Parser<T>):Parser<T>=>optWhitespace.then(parser).skip(optWhitespace);
 const clearSpacedString = (val:string)=>clearSpaces(string(val));
@@ -32,12 +32,12 @@ const viewHandler = seqMap(
         ),
         seqMap(
             key(/ALTER/i),
-            listed(seqMap(WORD,clearSpacedString('='),SWORD,(lhs,_,rhs)=>({ lhs,rhs }))),
+            listed(seqMap(WORD,clearSpacedString('='),EXPRESSION,(lhs,_,rhs)=>({ lhs,rhs }))),
             (_,alter)=>({ clause:'alter',alter } as VIEW_CLAUSE_TYPE)
         ),
         seqMap(
             key(/SHOWS/i),
-            listed(seqMap(WORD,opt(regex(/AS/i).skip(whitespace).then(SWORD)),(key,value)=>({ key,value }))),
+            listed(seqMap(EXPRESSION,opt(regex(/AS/i).skip(whitespace).then(SWORD)),(key,label)=>({ key,label }))),
             (_,shows)=>({ clause:'shows',shows } as VIEW_CLAUSE_TYPE)
         ),
         seqMap(
@@ -54,12 +54,12 @@ const displayHandler = seqMap(
     opt(key(/TASKS|DATA/i).map(v=>v.toLowerCase())),
     alt(
         seqMap(key(/FROM/i),alt(
-            seqMap(string('*').skip(W_EOF),()=>({ source:'all',value:null })),
-            seqMap(string('#'),WORD,(_,value)=>({ source:'tag',value })),
-            seqMap(string('@'),WORD,(_,value)=>({ source:'resource',value })),
-            seqMap(string('^'),WORD,(_,value)=>({ source:'local',value })),
-            seqMap(SWORD,(value)=>({ source:'path',value }))
-        ),(_f,{ source,value })=>({ clause:'from',source,value } as DISPLAY_CLAUSE_TYPE)),
+            seqMap(string('*').skip(W_EOF),()=>({ type:'all' } as FROM_TYPE)),
+            seqMap(string('#'),WORD,(_,value)=>({ type:'tag',value } as FROM_TYPE)),
+            seqMap(string('@'),WORD,(_,value)=>({ type:'resource',value } as FROM_TYPE)),
+            seqMap(string('^'),WORD,(_,value)=>({ type:'local',value } as FROM_TYPE)),
+            seqMap(SWORD,(value)=>({ type:'path',value } as FROM_TYPE))
+        ),(_f,source)=>({ clause:'from',source } as DISPLAY_CLAUSE_TYPE)),
         seqMap(key(/ON/i),EXPRESSION,(_,on)=>({ clause:'on',on } as DISPLAY_CLAUSE_TYPE)),
         seqMap(key(/FOCUS/i),WORD,(_f,focus)=>({ clause:'focus',focus } as DISPLAY_CLAUSE_TYPE)),
         seqMap(key(/VIEW/i),viewHandler,(_v,view)=>view)
