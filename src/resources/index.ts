@@ -2,12 +2,14 @@ import type { CachedMetadata, TFile } from "obsidian";
 import parse, { type RESOURCE_TYPE } from "./parser";
 import Resource from "./Resource";
 import type NovaNotePlugin from "src/main";
+import TaskResource from "./TaskResource";
 
 export type ResourceList = { [key:string]:{ [key:string]:string } };
 export const resources:{ [key:string]:Resource } = {};
 export let count = 0;
 
 export function loadResources(nova:NovaNotePlugin){
+    resources['task'] = new TaskResource();
     for(const file of nova.app.vault.getMarkdownFiles()){
         const meta = nova.app.metadataCache.getFileCache(file);
         if(meta && meta.frontmatter && meta.frontmatter['nova-data']) addResources(meta.frontmatter['nova-data'],file);

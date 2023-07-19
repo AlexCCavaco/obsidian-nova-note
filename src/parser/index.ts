@@ -19,6 +19,7 @@ export const listed     = <T>(parser:Parser<T>,seperator=','):Parser<T[]>=>parse
 export const opt = <T>(parser:Parser<T>):Parser<T|null>=>parser.times(0,1).map(res=>(res.length===0 ? null : res[0]));
 
 export const W_EOF      = whitespace.or(eof);
+export const OPTW_EOF   = optWhitespace.or(eof);
 
 export const LPAREN     = keyed(string('('));
 export const RPAREN     = keyed(string(')'));
@@ -68,8 +69,7 @@ export const NULL       = keyed(regex(/NULL/i).desc('null').skip(W_EOF)).result(
 
 export const ARRAY      = lazy(():Parser<VAL_TYPE>=>LBRACK.then(listed(LITERAL)).skip(RBRACK).map((value)=>({ type:'array',value })));
 export const FN         = lazy(():Parser<VAL_TYPE>=>seqMap(WORD,LPAREN.then(listed(EXPRESSION)).skip(RPAREN),(name,params)=>({ type:'fn',value:[name,params] })));
-export const LITERAL    = lazy(():Parser<VAL_TYPE>=>alt(TRUE, FALSE, NULL, TAG, NUMERIC, STRING_VAL, FN, ARRAY));
-
+export const LITERAL    = lazy(():Parser<VAL_TYPE>=>alt(TRUE, FALSE, NULL, TAG, NUMERIC, FN, ARRAY, STRING_VAL));
 
 export type OPERATION_TYPE = { lhs?:OPR_TYPE,op:OPERAND,rhs:OPR_TYPE };
 export type OPR_TYPE = OPERATION_TYPE | VAL_TYPE;
