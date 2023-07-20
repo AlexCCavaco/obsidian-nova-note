@@ -32,7 +32,7 @@ export function makeImage(name:string,imageStr:string, data:BlockDataElm, fileDa
 function makeIconImage(elm:HTMLElement,res:ParsedImageString,data:BlockDataElm,fileData:FileData){
     setIcon(elm,res.icon);
     for(const prop of res.props){
-        const value = processOPR(data,fileData,prop.value);
+        const value = processOPR(data,fileData,prop.value,data.meta?.frontmatter);
         switch(prop.key){
             case 'color': if(value!=null) elm.style.color = value.toString(); break;
         }

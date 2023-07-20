@@ -13,7 +13,7 @@ const columnHandler = seqMap(
     alt(
         seqMap(key(/START/i),NUMBER,(_tp,width)=>({ type:'start',width })),
         seqMap(key(/BREAK/i),NUMBER,(_tp,width)=>({ type:'break',width })),
-        key(/END/i).map(()=>({ type:'end',width:null }))
+        key(/END/i).skip(W_EOF).map(()=>({ type:'end',width:null }))
     ),
     (_col,{ type,width })=>({ block:'column',type,width } as BLOCK_TYPE)
 );

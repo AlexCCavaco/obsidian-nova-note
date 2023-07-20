@@ -14,7 +14,7 @@ export function isObjValType(data:VAL_TYPE):data is OBJ_VAL_TYPE{ return !(typeo
 
 export type OPERAND = '-'|'!'|'+'|'-'|'*'|'/'|'='|'!='|'>'|'>='|'<'|'<='|'and'|'or'|'not'|'in'|'nin';
 
-export const keyed      = <T>(parser:Parser<T>):Parser<T>=>parser.skip(optWhitespace);
+export const keyed      = <T>(parser:Parser<T>):Parser<T>=>parser.skip(OPTW_EOF);
 export const listed     = <T>(parser:Parser<T>,seperator=','):Parser<T[]>=>parser.sepBy(string(seperator).skip(optWhitespace));
 export const opt = <T>(parser:Parser<T>):Parser<T|null>=>parser.times(0,1).map(res=>(res.length===0 ? null : res[0]));
 

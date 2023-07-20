@@ -6,7 +6,8 @@ import { writable, type Writable } from "svelte/store";
 import type NovaNotePlugin from "src/main";
 import { loadFromAll, loadFromLocal, loadFromPath, loadFromResource, loadFromTag, type FileData, getCurFileData } from "./dataLoader";
 
-export type BlockDataElm = (FileData & { data:{[key:string]:unknown} });
+export type BlockDataVal = {[key:string]:unknown|{lazy:true,get:()=>unknown}};
+export type BlockDataElm = (FileData & { data:BlockDataVal });
 export type BlockData = BlockDataElm[];
 
 export default class {

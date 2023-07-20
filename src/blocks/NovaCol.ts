@@ -8,6 +8,7 @@ export default class {
     constructor(width:number){
         this.elm = document.createElement('div');
         this.elm.classList.add('nova-col');
+        this.cols = [];
         this.break(width);
     }
 
