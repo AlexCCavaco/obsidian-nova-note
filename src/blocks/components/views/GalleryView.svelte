@@ -1,5 +1,6 @@
 <script lang="ts">
-	import type { ViewData } from "src/blocks/NovaView";
+	import { MarkdownRenderer } from "obsidian";
+	import type { ViewData, ViewDataElm } from "src/blocks/NovaView";
 	import type NovaView from "src/blocks/NovaView";
 	import { makeIcon, makeImage } from "src/blocks/interface";
 	import { writable, type Writable } from "svelte/store";
@@ -13,13 +14,16 @@
 
     export let view:NovaView;
 
+    const getLeaf = (openNew=false)=>view.block.nova.app.workspace.getLeaf(openNew?'split':undefined);
+    const openElm = (elm:ViewDataElm<GalleryOpts>)=>(ev:MouseEvent)=>{ if(ev.button>1) return; ev.preventDefault(); getLeaf(ev.button===1).openFile(elm.block.file); };
+
     const data:Writable<ViewData<GalleryOpts>> = writable([]);
     view.data.subscribe(nData=>{ data.set(nData.map((iData)=>({ ...iData,opts:{...defaultOpts,...iData.opts} }))); });
 </script>
 
 <div class="nova-gallery">
 {#each $data as elm}
-    <a class="elm" href="{elm.link}">
+    <a class="elm" href="{elm.link}" on:mouseup={openElm(elm)}>
         <div class="cover">{#if elm.opts.cover}{@html makeImage(elm.opts.title,elm.opts.cover,elm.block,view.file).outerHTML}{/if}</div>
         <div class="details">
             <div class="main">

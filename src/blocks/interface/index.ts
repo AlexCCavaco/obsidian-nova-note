@@ -38,3 +38,14 @@ function makeIconImage(elm:HTMLElement,res:ParsedImageString,data:BlockDataElm,f
         }
     }
 }
+
+function makeExternalLink(text:string,url:string,parentElm?:HTMLElement):HTMLElement{
+    const elm = document.createElement("a");
+    elm.textContent = text;
+    elm.rel = "noopener";
+    elm.target = "_blank";
+    elm.classList.add("external-link");
+    elm.href = url;
+    if(parentElm) parentElm.appendChild(elm);
+    return elm;
+}
