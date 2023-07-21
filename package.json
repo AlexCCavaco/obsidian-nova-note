@@ -24,6 +24,7 @@
 		"esbuild-svelte": "^0.7.4",
 		"file": "^0.2.2",
 		"file-loader": "^6.2.0",
+		"nanoid": "^4.0.2",
 		"npm-watch": "^0.11.0",
 		"obsidian": "latest",
 		"parsimmon": "^1.18.1",

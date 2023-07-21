@@ -4,7 +4,7 @@ import type { OPR_TYPE } from "src/parser";
 import NovaView from "./NovaView";
 import { writable, type Writable } from "svelte/store";
 import type NovaNotePlugin from "src/main";
-import { loadFromAll, loadFromLocal, loadFromPath, loadFromResource, loadFromTag, type FileData, getCurFileData } from "./dataLoader";
+import { loadFromAll, loadFromLocal, loadFromPath, loadFromResource, loadFromTag, type FileData, getCurFileData } from "../handlers/dataLoader";
 
 export type BlockDataVal = {[key:string]:unknown|{lazy:true,get:()=>unknown}};
 export type BlockDataElm = (FileData & { data:BlockDataVal });
@@ -61,31 +61,31 @@ export default class {
         return view;
     }
 
-    load(){
+    async load(){
         this.component = new Block({
             target: this.elm,
             props: {
                 block: this
             }
         });
-        this.loadData();
+        await this.loadData();
     }
 
-    loadData(){
-        const data:BlockData = loadData(this.nova,this.from,this.on);
+    async loadData(){
+        const data:BlockData = await loadData(this.nova,this.from,this.on);
         this.data.set(data);
     }
     onDataChange(){}
 
 }
 
-function loadData(nova:NovaNotePlugin,from:FROM_TYPE,on:OPR_TYPE):BlockData{
+async function loadData(nova:NovaNotePlugin,from:FROM_TYPE,on:OPR_TYPE):Promise<BlockData>{
     switch(from.type){
-        case "tag":      return loadFromTag(nova,from.value,on);
-        case "resource": return loadFromResource(nova,from.value,on);
-        case "all":      return loadFromAll(nova,on);
-        case "local":    return loadFromLocal(nova,from.value,on);
-        case "path":     return loadFromPath(nova,from.value,on);
+        case "tag":      return await loadFromTag(nova,from.value,on);
+        case "resource": return await loadFromResource(nova,from.value,on);
+        case "all":      return await loadFromAll(nova,on);
+        case "local":    return await loadFromLocal(nova,from.value,on);
+        case "path":     return await loadFromPath(nova,from.value,on);
     }
     return [];
 }

@@ -1,7 +1,7 @@
 import { isObjValType, isOfValType, type OPR_TYPE } from "src/parser";
 import View from "./components/View.svelte";
 import type { VIEW_TYPE } from "./definitions";
-import { processConditions, type FileData, processOPR } from "./dataLoader";
+import { processConditions, type FileData, processOPR } from "../handlers/dataLoader";
 import type NovaBlock from "./NovaBlock";
 import { writable, type Writable } from "svelte/store";
 import type { BlockData, BlockDataElm } from "./NovaBlock";
@@ -64,18 +64,18 @@ export default class {
         });
     }
 
-    loadData(blockData:BlockData){
+    async loadData(blockData:BlockData){
         const nData:ViewData = [];
         let index = 0;
         for(const data of blockData){
-            if(!processConditions(data,this.file,this.where)) continue;
+            if(!await processConditions(data,this.file,this.where)) continue;
             const elm:ViewDataElm = { data:{},opts:{},block:data,link:data.file.path };
             for(const show of this.shows){
                 const name = show.key!=null && isOfValType(show.key) ?
                     (isObjValType(show.key) ? show.key.value.toString() : show.key.toString()) : `col:${++index}`;
-                elm.data[name] = { value:processOPR(data,this.file,show.key),label:show.label??name };
+                elm.data[name] = { value:await processOPR(data,this.file,show.key),label:show.label??name };
             }
-            for(const altr of this.alter) elm.opts[altr.lhs] = processOPR(data,this.file,altr.rhs);
+            for(const altr of this.alter) elm.opts[altr.lhs] = await processOPR(data,this.file,altr.rhs);
             nData.push(elm);
         }
         this.data.set(nData);
