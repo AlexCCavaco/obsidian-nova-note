@@ -3,15 +3,17 @@ import { WORD, SWORD, opt, EXPRESSION, type OPR_TYPE, OPTW_EOF } from "../parser
 
 export type RESOURCE_COL_STRING = {
     label:string,
-    type:'text'|'number'|'select'|'multisel'|'list'|'check'|'file'|'folder'|'link'|'date'|'time'|'datetime'|'status'|string,
+    type:'text'|'number'|'select'|'multisel'|'list'|'check'|'link'|'date'|'time'|'datetime'|'color'|string,
     input:true,
-    multi:boolean
+    multi:boolean,
+    required:boolean
 };
 export type RESOURCE_COL_DEFTYPE = {
     label:string,
     type:'type',
     input:false,
     multi:boolean,
+    required:boolean,
     value:string|null
 };
 export type RESOURCE_COL_RESOURCE = {
@@ -19,6 +21,7 @@ export type RESOURCE_COL_RESOURCE = {
     type:'resource',
     input:boolean,
     multi:boolean,
+    required:boolean,
     resource:string|null,
     on:OPR_TYPE
 };
@@ -38,35 +41,33 @@ export const parser = seqMap(
         seqMap(
             string('$').then(WORD),
             opt(string('+')).skip(OPTW_EOF),
-            (value,multi)=>({ type:'type',value,input:false,multi:!!multi } as Omit<RESOURCE_COL_DEFTYPE,'label'>)
+            opt(string('*')).skip(OPTW_EOF),
+            (value,multi,required)=>({ type:'type',value,input:false,multi:!!multi,required:!!required } as Omit<RESOURCE_COL_DEFTYPE,'label'>)
         ),
         seqMap(
             string('@').then(WORD),
             opt(string('+')).skip(OPTW_EOF),
             opt(regex(/ON/i).skip(whitespace).then(EXPRESSION)),
-            (resource,multi,on)=>({ type:'resource',resource,on,input:!!on,multi:!!multi } as Omit<RESOURCE_COL_RESOURCE,'label'>)
+            (resource,multi,on)=>({ type:'resource',resource,on,input:false,multi:!!multi,required:false } as Omit<RESOURCE_COL_RESOURCE,'label'>)
+        ),
+        seqMap(
+            string('@').then(WORD),
+            opt(string('+')).skip(OPTW_EOF),
+            opt(string('*')).skip(OPTW_EOF),
+            (resource,multi,required)=>({ type:'resource',resource,on:null,input:true,multi:!!multi,required:!!required } as Omit<RESOURCE_COL_RESOURCE,'label'>)
         ),
         seqMap(
             string('=>').skip(optWhitespace).then(EXPRESSION),
             (value)=>({ type:'value',value,multi:false } as Omit<RESOURCE_COL_VALUE,'label'>)
         ),
         seqMap(
-            regex(/TEXT|NUMBER|SELECT|MULTISEL|LIST|CHECK|FILE|FOLDER|LINK|DATE|TIME|DATETIME|STATUS/i),
+            regex(/TEXT|NUMBER|SELECT|MULTISEL|LIST|CHECK|LINK|DATE|TIME|DATETIME|COLOR/i),
             opt(string('+')).skip(OPTW_EOF),
-            (type,multi)=>({ type:type.toLowerCase(),multi:!!multi,input:true } as Omit<RESOURCE_COL_STRING,'label'>)
+            opt(string('*')).skip(OPTW_EOF),
+            (type,multi,required)=>({ type:type.toLowerCase(),multi:!!multi,input:true,required:!!required } as Omit<RESOURCE_COL_STRING,'label'>)
         )
     ),
     (label,data)=>({ label,...data })
-);
-
-export const processedParser = seqMap(
-    SWORD,
-    alt(
-        string('=>').skip(optWhitespace).then(EXPRESSION).map((value)=>([value])),
-        seqMap(string('@').then(WORD),string('::').skip(optWhitespace).then(EXPRESSION),(resource,value)=>([value,resource]))
-    ),
-    //
-    (label,data)=>({ label,resource:data[1]??null,value:data[0] })
 );
 
 export const typeParser = seqMap(

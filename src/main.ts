@@ -1,6 +1,6 @@
-import { addIcon, Plugin, TFile, TFolder } from 'obsidian';
+import { addIcon, Editor, MarkdownView, Plugin, TFile, TFolder } from 'obsidian';
 import { SettingsTab, DefaultSettings, type Settings } from "./SettingsTab";
-import { fileChanged, fileDeleted, loadResources, count as resourceCount } from './resources';
+import { addResourceToFile, createResourceOnFile, fileChanged, fileDeleted, loadResources, count as resourceCount } from './resources';
 import { codeBlockProcessor } from './blocks';
 import { openFileFromEvent } from './handlers/leafHandler';
 import { prepareLoader } from './handlers/dataLoader';
@@ -55,6 +55,18 @@ export default class NovaNotePlugin extends Plugin {
 			this.app.metadataCache.on('changed',fileChanged);
 			this.app.metadataCache.on('deleted',fileDeleted);
 			console.info(`Loaded ${resourceCount} Resources`);
+			
+			// ADD RESOURCE COMMANDS
+			this.addCommand({
+				id: "create-nova-resource-on-file",
+				name: "Create Nova Resource",
+				editorCallback:(editor:Editor,ctx:MarkdownView)=>createResourceOnFile(this,ctx.file),
+			});
+			this.addCommand({
+				id: "add-nova-resource-to-file",
+				name: "Add a Nova Resource to File",
+				editorCallback:(editor:Editor,ctx:MarkdownView)=>addResourceToFile(this,ctx.file),
+			});
 		}
 
 		// NOVA LANGUAGE

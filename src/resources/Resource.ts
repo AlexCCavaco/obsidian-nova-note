@@ -4,16 +4,27 @@ import type { BlockDataElm } from "src/blocks/NovaBlock";
 import type NovaNotePlugin from "src/main";
 import { loadFromResource, processOPR, type FileData } from "src/handlers/dataLoader";
 
+export type ResourceOpts = { cols?:RESOURCE_TYPE,extend?:string,html?:string };
+
 export default class {
 
-    name : string;
-    cols : RESOURCE_TYPE;
-    file?: TFile;
+    name    : string;
+    extend ?: string;
+    html   ?: string;
+    cols    : RESOURCE_TYPE;
+    file   ?: TFile;
 
-    constructor(name:string,cols:RESOURCE_TYPE,file?:TFile){
+    constructor(name:string,file?:TFile,opts?:ResourceOpts){
         this.name = name;
-        this.cols = cols;
+        this.cols = {};
+        if(opts) this.updateOpts(opts);
         this.file = file;
+    }
+
+    updateOpts(opts:ResourceOpts){
+        if(opts.extend) this.extend = opts.extend;
+        if(opts.html)   this.html = opts.html;
+        if(opts.cols)   this.cols = opts.cols;
     }
 
     update(cols:RESOURCE_TYPE) {
