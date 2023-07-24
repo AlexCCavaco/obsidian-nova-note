@@ -47,6 +47,9 @@ export const MINUS      = keyed(string('-'));
 export const MULTIPLY   = keyed(string('*'));
 export const DIVIDE     = keyed(string('/'));
 
+export const INTERROG   = keyed(string('?'));
+export const COLON      = keyed(string(':'));
+
 export const EQUAL      = keyed(string('='));
 export const DIFFERENT  = keyed(string('!='));
 
@@ -58,7 +61,7 @@ export const COMPARE    = alt(GREATER,GREATER_EQ,LESSER,LESSER_EQ);
 
 export const AND        = keyed(regex(/AND/i).desc('AND').skip(W_EOF)).result('and');
 export const OR         = keyed(regex(/OR/i).desc('OR').skip(W_EOF)).result('or');
-export const NOT        = keyed(regex(/NOT/i).desc('NOT').skip(W_EOF)).result('not');
+export const NOT        = keyed(alt(regex(/NOT/i).skip(W_EOF),string('!')).desc('NOT')).result('not');
 
 export const IN         = keyed(regex(/IN/i).desc('IN').skip(W_EOF)).result('in');
 export const LOGIC      = AND.or(OR).or(IN).or(NOT.then(IN).result('nin'));
@@ -68,10 +71,11 @@ export const FALSE      = keyed(regex(/FALSE/i).desc('false').skip(W_EOF)).resul
 export const NULL       = keyed(regex(/NULL/i).desc('null').skip(W_EOF)).result(null);
 
 export const ARRAY      = lazy(():Parser<VAL_TYPE>=>LBRACK.then(listed(LITERAL)).skip(RBRACK).map((value)=>({ type:'array',value })));
+//export const TERNARY    = lazy(():Parser<VAL_TYPE>=>seqMap(EXPRESSION.skip(INTERROG),EXPRESSION.skip(COLON),EXPRESSION,(val,the,els)=>({ type:'if',value:[val,the,els] })));
 export const FN         = lazy(():Parser<VAL_TYPE>=>seqMap(WORD,LPAREN.then(listed(EXPRESSION)).skip(RPAREN),(name,params)=>({ type:'fn',value:[name,params] })));
 export const LITERAL    = lazy(():Parser<VAL_TYPE>=>alt(TRUE, FALSE, NULL, TAG, NUMERIC, FN, ARRAY, STRING_VAL));
 
-export type OPERATION_TYPE = { lhs?:OPR_TYPE,op:OPERAND,rhs:OPR_TYPE };
+export type OPERATION_TYPE = { lhs?:OPR_TYPE,op:OPERAND,rhs:OPR_TYPE } | { lhs:OPR_TYPE,op:'if',rhs:[OPR_TYPE,OPR_TYPE] };
 export type OPR_TYPE = OPERATION_TYPE | VAL_TYPE;
 const mapExpressions = (str:OPR_TYPE,data:[op:OPERAND,rhs:OPR_TYPE][]):OPR_TYPE=>{
     if(data.length===0) return str;
@@ -82,15 +86,25 @@ const mapExpressions = (str:OPR_TYPE,data:[op:OPERAND,rhs:OPR_TYPE][]):OPR_TYPE=
     }
     return res;
 };
+const mapTernary = (lhs:OPR_TYPE,data:[OPR_TYPE,OPR_TYPE][]):OPR_TYPE=>{
+    if(data.length===0) return lhs;
+    let res:OPR_TYPE = lhs;
+    for(const rhs of data){
+        const obj:OPR_TYPE = { lhs,op:'if',rhs };
+        res = obj;
+    }
+    return res;
+};
 
-export const EXPRESSION     = lazy(():Parser<OPR_TYPE>=>LOGICAL);
+export const EXPRESSION     = lazy(():Parser<OPR_TYPE>=>TERNARY);
 
 export const PRIMARY        = lazy(():Parser<OPR_TYPE>=>LPAREN.then(EXPRESSION).skip(RPAREN)
                                     .or(MINUS.then(PRIMARY).map(rhs=>({ op:'-',rhs } as OPR_TYPE)))
                                     .or(  NOT.then(PRIMARY).map(rhs=>({ op:'!',rhs } as OPR_TYPE)))
                                     .or(LITERAL) );
-export const MULTIPLICATIVE = lazy(():Parser<OPR_TYPE>=>seqMap(PRIMARY, seq(MULTIPLY.or(DIVIDE), PRIMARY).many(), mapExpressions));
-export const ADDITIVE       = lazy(():Parser<OPR_TYPE>=>seqMap(MULTIPLICATIVE, seq(PLUS.or(MINUS), MULTIPLICATIVE).many(), mapExpressions));
-export const EQUALITY       = lazy(():Parser<OPR_TYPE>=>seqMap(ADDITIVE, seq(EQUAL.or(DIFFERENT), ADDITIVE).many(), mapExpressions));
-export const COMPARATIVE    = lazy(():Parser<OPR_TYPE>=>seqMap(EQUALITY, seq(COMPARE, EQUALITY).many(), mapExpressions));
-export const LOGICAL        = lazy(():Parser<OPR_TYPE>=>seqMap(COMPARATIVE, seq(LOGIC, COMPARATIVE).many(), mapExpressions));
+export const MULTIPLICATIVE = lazy(():Parser<OPR_TYPE>=>seqMap(PRIMARY,         seq(MULTIPLY.or(DIVIDE), PRIMARY).many(),   mapExpressions));
+export const ADDITIVE       = lazy(():Parser<OPR_TYPE>=>seqMap(MULTIPLICATIVE,  seq(PLUS.or(MINUS), MULTIPLICATIVE).many(), mapExpressions));
+export const EQUALITY       = lazy(():Parser<OPR_TYPE>=>seqMap(ADDITIVE,        seq(EQUAL.or(DIFFERENT), ADDITIVE).many(),  mapExpressions));
+export const COMPARATIVE    = lazy(():Parser<OPR_TYPE>=>seqMap(EQUALITY,        seq(COMPARE, EQUALITY).many(),              mapExpressions));
+export const LOGICAL        = lazy(():Parser<OPR_TYPE>=>seqMap(COMPARATIVE,     seq(LOGIC, COMPARATIVE).many(),             mapExpressions));
+export const TERNARY        = lazy(():Parser<OPR_TYPE>=>seqMap(LOGICAL,         seq(INTERROG.then(EXPRESSION), COLON.then(EXPRESSION)).many(),mapTernary));

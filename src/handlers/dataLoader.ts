@@ -4,6 +4,8 @@ import { isObjValType, isOfValType, type OPERATION_TYPE, type OPR_TYPE, type VAL
 import type { BlockData, BlockDataElm, BlockDataVal } from "../blocks/NovaBlock";
 import { getResource } from "src/resources";
 import { getId } from "./idHandler";
+import { isAsync } from "./tools";
+import { errorNoticeMessage } from "./noticeHandler";
 
 export type FileData = { file:TFile,meta:CachedMetadata|null };
 
@@ -45,7 +47,7 @@ export async function loadFromTag(nova:NovaNotePlugin,tag:string,on:OPR_TYPE):Pr
 
 export async function loadFromResource(nova:NovaNotePlugin,resourceName:string,on:OPR_TYPE,thisData?:BlockDataVal):Promise<BlockData>{
     const resource = getResource(resourceName);
-    if(!resource) throw new Error(`Resource ${resourceName} not found`);
+    if(!resource) errorNoticeMessage(`Resource ${resourceName} not found`);
     return forEachFile(nova,async (fileData,curData)=>{
         if(!(fileData.meta && fileData.meta.frontmatter && fileData.meta.frontmatter['nova-use'])) return false;
         const data = formData(fileData,assertFrontmatter(fileData));
@@ -76,8 +78,7 @@ export async function loadFromPath(nova:NovaNotePlugin,value:string,on:OPR_TYPE)
 
 export const processConditions = async (data:BlockDataElm,curData:FileData,conditions:OPR_TYPE,thisData?:BlockDataVal):Promise<boolean>=>!!await processOPR(data,curData,conditions,thisData);
 export async function processOPR(data:BlockDataElm,curData:FileData,conditions:OPR_TYPE,thisData?:BlockDataVal){
-    const res = await processCondition(conditions);
-    return isObjValType(res) ? res.value : res;
+    return formType(await processCondition(conditions));
 
     async function processCondition(condition:OPR_TYPE):Promise<VAL_TYPE>{
         if(isOfValType(condition)){
@@ -94,14 +95,22 @@ export async function processOPR(data:BlockDataElm,curData:FileData,conditions:O
             if(condition.type==='fn'){
                 const params = condition.value[1].map(async v=>await processCondition(v));
                 if(typeof value !== 'function') throw new Error(`Value "${value}" for param "${condition.value}" is not a Function`);
-                value = value(...params);
+                if(isAsync(value)) value = await value(...params);
+                else value = value(...params);
             }
             return valSet(value);
         }
         return processValue(condition);
     }
+    async function handleIf(lhs:OPR_TYPE,[the,els]:[OPR_TYPE,OPR_TYPE]):Promise<VAL_TYPE>{
+        const check = !!(await processCondition(lhs));
+        const yaRes = await processCondition(the);
+        const noRes = await processCondition(els);
+        return check ? yaRes : noRes;
+    }
     async function processValue({ lhs,op,rhs}:OPERATION_TYPE):Promise<VAL_TYPE>{
         const nLft = lhs===undefined ? null : lhs = await processCondition(lhs);
+        if(op==='if') return handleIf(lhs as Extract<OPERATION_TYPE,{op:'if'}>['lhs'],rhs);
         const nRhs = await processCondition(rhs);
         switch(op){
             case "!":   return !nRhs;
@@ -122,6 +131,10 @@ export async function processOPR(data:BlockDataElm,curData:FileData,conditions:O
         }
         return null;
     }
+}
+
+function formType(res:VAL_TYPE){
+    return isObjValType(res) ? res.value : res;
 }
 
 function nullableOrCalc(lhs:VAL_TYPE,rhs:VAL_TYPE,calc:(lhs:any,rhs:any)=>boolean):boolean{
@@ -172,8 +185,12 @@ async function processDataLocation(props:string[],blockData:BlockDataElm,curData
     }
     if(props[0][0]!=='$') return blockData.data;
     return {
-        '$count': (arr:VAL_TYPE,on?:OPR_TYPE)=>{let nArr = []; if(on) nArr = formArray(arr).filter(async (val:any)=>await processOPR(blockData,curData,on,val)); return nArr.length; },
-        '$filter':(arr:VAL_TYPE,on:OPR_TYPE)=>formArray(arr).filter(async (val:any)=>await processOPR(blockData,curData,on,val))
+        '$count': async (arr:VAL_TYPE,on?:OPR_TYPE)=>{let nArr = []; if(on) nArr = formArray(arr).filter(async (val:any)=>await processOPR(blockData,curData,on,val)); return nArr.length; },
+        '$filter':async (arr:VAL_TYPE,on:OPR_TYPE)=>formArray(arr).filter(async (val:any)=>await processOPR(blockData,curData,on,val)),
+        '$some':  async (arr:VAL_TYPE,on:OPR_TYPE)=>formArray(arr).some(async (val:any)=>await processConditions(blockData,curData,on,val)),
+        '$every': async (arr:VAL_TYPE,on:OPR_TYPE)=>formArray(arr).every(async (val:any)=>await processConditions(blockData,curData,on,val)),
+        '$if':    async (val:OPR_TYPE,res:OPR_TYPE,els?:OPR_TYPE)=>((await processOPR(blockData,curData,val))?(await processOPR(blockData,curData,res)):(els?await processOPR(blockData,curData,els):null)),
+        '$path':  async (val:OPR_TYPE)=>(blockData.file.parent.path + '/' + await processOPR(blockData,curData,val)),
     }
 
     function splice(){ props.splice(0,1); }
@@ -191,4 +208,8 @@ function formArray(arr:VAL_TYPE){
     if(Array.isArray(arr)) return arr;
     if(isObjValType(arr)) return Array.isArray(arr.value) ? arr.value : [];
     return [];
+}
+
+export function getFileData(nova:NovaNotePlugin,file:TFile):FileData{
+    return { file,meta:nova.app.metadataCache.getCache(file.path) };
 }

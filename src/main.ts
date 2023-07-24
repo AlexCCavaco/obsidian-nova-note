@@ -1,6 +1,6 @@
 import { addIcon, Editor, MarkdownView, Plugin, TFile, TFolder } from 'obsidian';
 import { SettingsTab, DefaultSettings, type Settings } from "./SettingsTab";
-import { addResourceToFile, createResourceOnFile, fileChanged, fileDeleted, loadResources, count as resourceCount } from './resources';
+import { addResourceToFile, createResourceOnFile, fileChanged, fileDeleted, loadResourceOfFile } from './resources';
 import { codeBlockProcessor } from './blocks';
 import { openFileFromEvent } from './handlers/leafHandler';
 import { prepareLoader } from './handlers/dataLoader';
@@ -36,9 +36,9 @@ export default class NovaNotePlugin extends Plugin {
 					path = target.getAttribute('data-path');
 				}
 				if(!path) return;
-				const folder = this.app.vault.getAbstractFileByPath(path);console.log('[]',path,folder,ev.target);
+				const folder = this.app.vault.getAbstractFileByPath(path);
 				if(!folder || !(folder instanceof TFolder)) return;
-				const folderName = folder.name.toLowerCase();console.log('::',folderName);
+				const folderName = folder.name.toLowerCase();
 				// FIND FILE OF SAME NAME
 				for(const file of folder.children){
 					if(!(file instanceof TFile)) continue;
@@ -51,10 +51,9 @@ export default class NovaNotePlugin extends Plugin {
 
 		// RESOURCES
 		if(this.settings.enableResources){
-			loadResources(this);
+			this.app.metadataCache.on('resolve',(file)=>loadResourceOfFile(this,file));
 			this.app.metadataCache.on('changed',fileChanged);
 			this.app.metadataCache.on('deleted',fileDeleted);
-			console.info(`Loaded ${resourceCount} Resources`);
 			
 			// ADD RESOURCE COMMANDS
 			this.addCommand({
