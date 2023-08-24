@@ -1,5 +1,5 @@
 import { type CachedMetadata, type TFile } from "obsidian";
-import parse, { parseType, type TypeData } from "./parser";
+import { parseType, type TypeData } from "./parser";
 import Resource, { type ResourceOpts } from "./Resource";
 import type NovaNotePlugin from "src/main";
 import TaskResource from "./TaskResource";
@@ -7,6 +7,7 @@ import ResourceListModal from "./modals/ResourceListModal";
 import { errorNotice, errorNoticeMessage } from "src/handlers/noticeHandler";
 import ResourceEditableModal from "./modals/ResourceEditableModal";
 import type { FileData } from "src/handlers/dataLoader";
+import ResourceCol from "./ResourceCol";
 
 export type ResourceList = { [key:string]:{ [key:string]:string } };
 export const resources:{ [key:string]:Resource } = {};
@@ -42,10 +43,10 @@ export function addResources(resourcesData:ResourceList,file:TFile){
     const keys = Object.keys(resourcesData);
     for(const key of keys){
         const data = resourcesData[key];
-        const opts = handleResourceCols(data);
+        const { cols,opts } = handleResourceCols(data);
         if(!resources[key]) count++;
         else errorNoticeMessage(`Duplicated Resource ${key}, Unexpected Behaviour will occur, please rename one of the Resources`);
-        resources[key] = new Resource(key,file,opts);
+        resources[key] = new Resource(key,file,cols,opts);
         console.info(`Loaded Resource "${key}"`);
     }
 }
@@ -54,10 +55,10 @@ export function updateResources(resourcesData:ResourceList,file:TFile){
     const keys = Object.keys(resourcesData);
     for(const key of keys){
         const data = resourcesData[key];
-        const opts = handleResourceCols(data);
+        const { cols,opts } = handleResourceCols(data);
         if(!resources[key]){
             count++;
-            resources[key] = new Resource(key,file,opts);
+            resources[key] = new Resource(key,file,cols,opts);
         } else {
             resources[key].updateOpts(opts);
         }
@@ -69,13 +70,18 @@ export function deleteResources(resourcesData:ResourceList,file:TFile){
     for(const key of keys){ if(resources[key]) delete resources[key]; }
 }
 
-function handleResourceCols(data:{[key:string]:string}):ResourceOpts{
+function handleResourceCols(data:{[key:string]:string}):{ cols:{[key:string]:ResourceCol},opts:ResourceOpts }{
     const colKeys = Object.keys(data);
-    const opts:ResourceOpts = {}; opts.cols = {};
-    if(data['$extend']) opts.extend = data['$extend'];
-    if(data['$html'])   opts.html = data['$html'];
-    for(const colKey of colKeys){ if(colKey[0]!=='$') opts.cols[colKey] = parse(data[colKey]);}
-    return opts;
+    const opts:ResourceOpts = {};
+    const cols:{[key:string]:ResourceCol} = {};
+    for(const colKey of colKeys){
+        if(colKey[0]!=='$') cols[colKey] = ResourceCol.parse(colKey,data[colKey].toString());
+        else {
+            const key = colKey.substring(1) as keyof Exclude<ResourceOpts,undefined>;
+            /*/*/ opts[key] = data[colKey];
+        }
+    }
+    return { cols,opts };
 }
 
 /*/===/*/

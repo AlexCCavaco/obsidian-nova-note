@@ -66,12 +66,12 @@ export async function loadFromAll(nova:NovaNotePlugin,on:OPR_TYPE):Promise<Block
     });
 }
 
-export async function loadFromLocal(nova:NovaNotePlugin,value:string,on:OPR_TYPE):Promise<BlockData>{
+export async function loadFromLocal(nova:NovaNotePlugin,reference:string,on:OPR_TYPE):Promise<BlockData>{
     //TODO
     return [];
 }
 
-export async function loadFromPath(nova:NovaNotePlugin,value:string,on:OPR_TYPE):Promise<BlockData>{
+export async function loadFromPath(nova:NovaNotePlugin,path:string,on:OPR_TYPE):Promise<BlockData>{
     //TODO
     return [];
 }

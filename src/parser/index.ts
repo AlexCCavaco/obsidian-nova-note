@@ -71,7 +71,6 @@ export const FALSE      = keyed(regex(/FALSE/i).desc('false').skip(W_EOF)).resul
 export const NULL       = keyed(regex(/NULL/i).desc('null').skip(W_EOF)).result(null);
 
 export const ARRAY      = lazy(():Parser<VAL_TYPE>=>LBRACK.then(listed(LITERAL)).skip(RBRACK).map((value)=>({ type:'array',value })));
-//export const TERNARY    = lazy(():Parser<VAL_TYPE>=>seqMap(EXPRESSION.skip(INTERROG),EXPRESSION.skip(COLON),EXPRESSION,(val,the,els)=>({ type:'if',value:[val,the,els] })));
 export const FN         = lazy(():Parser<VAL_TYPE>=>seqMap(WORD,LPAREN.then(listed(EXPRESSION)).skip(RPAREN),(name,params)=>({ type:'fn',value:[name,params] })));
 export const LITERAL    = lazy(():Parser<VAL_TYPE>=>alt(TRUE, FALSE, NULL, TAG, NUMERIC, FN, ARRAY, STRING_VAL));
 
