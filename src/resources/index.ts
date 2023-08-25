@@ -8,6 +8,7 @@ import { errorNotice, errorNoticeMessage } from "src/handlers/noticeHandler";
 import ResourceEditableModal from "./modals/ResourceEditableModal";
 import type { FileData } from "src/handlers/dataLoader";
 import ResourceCol from "./ResourceCol";
+import { parseExpression } from "src/parser";
 
 export type ResourceList = { [key:string]:{ [key:string]:string } };
 export const resources:{ [key:string]:Resource } = {};
@@ -70,15 +71,24 @@ export function deleteResources(resourcesData:ResourceList,file:TFile){
     for(const key of keys){ if(resources[key]) delete resources[key]; }
 }
 
-function handleResourceCols(data:{[key:string]:string}):{ cols:{[key:string]:ResourceCol},opts:ResourceOpts }{
+function handleResourceCols(data:{[key:string]:unknown}):{ cols:{[key:string]:ResourceCol},opts:ResourceOpts }{
     const colKeys = Object.keys(data);
     const opts:ResourceOpts = {};
     const cols:{[key:string]:ResourceCol} = {};
     for(const colKey of colKeys){
-        if(colKey[0]!=='$') cols[colKey] = ResourceCol.parse(colKey,data[colKey].toString());
+        const dataElm = data[colKey];
+        if(dataElm==null) continue;
+        if(colKey[0]!=='$') cols[colKey] = ResourceCol.parse(colKey,dataElm.toString());
         else {
-            const key = colKey.substring(1) as keyof Exclude<ResourceOpts,undefined>;
-            /*/*/ opts[key] = data[colKey];
+            const key = colKey.substring(1) as keyof ResourceOpts;
+            switch(key){
+                case "extend":      opts['extend']   = dataElm.toString(); break;
+                case "html":        opts['html']     = dataElm.toString(); break;
+                case "filename":    opts['filename'] = parseExpression(dataElm.toString()); break;
+                case "location":    opts['location'] = parseExpression(dataElm.toString()); break;
+                case "inline":      opts['inline']   = !!dataElm; break;
+                case "template":    opts['template'] = dataElm.toString(); break;
+            }
         }
     }
     return { cols,opts };

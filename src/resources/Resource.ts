@@ -4,7 +4,6 @@ import type { BlockDataElm } from "src/blocks/NovaBlock";
 import type NovaNotePlugin from "src/main";
 import { loadFromResource, processOPR, type FileData } from "src/handlers/dataLoader";
 import type { OPR_TYPE } from "src/parser";
-import ResourceAction from "./ResourceAction";
 import type { ResourceColDefTypeType } from "./ResourceColDefType";
 import type ResourceCol from "./ResourceCol";
 import ResourceColValue from "./ResourceColValue";
@@ -14,11 +13,10 @@ import ResourceColDefType from "./ResourceColDefType";
 export type ResourceOpts = {
     extend     ?: string,
     html       ?: string,
+    inline     ?: boolean,
     filename   ?: OPR_TYPE,
     location   ?: OPR_TYPE,
-    inline     ?: boolean,
     template   ?: string,
-    action     ?: {[key:string]:string}
 };
 
 export default class Resource {
@@ -33,7 +31,6 @@ export default class Resource {
     filename    : OPR_TYPE | null;
     location    : OPR_TYPE | null;
     template    : string | null;
-    action      : ResourceAction[];
 
     constructor(name:string, file?:TFile, cols?:Resource['cols'], opts?:ResourceOpts){
         this.name = name;
@@ -49,14 +46,6 @@ export default class Resource {
         this.location   = opts.location ?? null;
         this.template   = opts.template ?? null;
         this.inline     = opts.inline ? !!opts.inline : false;
-        this.action     = [];
-        if(opts.action){
-            const keys = Object.keys(opts.action);
-            for(const key of keys){
-                const action = ResourceAction.parse(key,opts.action[key]);
-                this.action.push(action);
-            }
-        }
     }
 
     async genPath(data:BlockDataElm,curData:FileData){ return this.location ? await processOPR(data,curData,this.location) : curData.file.parent.path; }

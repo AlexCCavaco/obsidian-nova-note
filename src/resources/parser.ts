@@ -53,12 +53,14 @@ export const typeParser = seqMap(
 
 export const parseType = (data:string):Omit<TypeData,'name'>=>typeParser.tryParse(data);
 
-export const actionParser = seqMap(
-    SWORD,
-    seqMap(WORD,string(':'),SWORD,(key,_,value)=>({ key,value })).many(),
-    (label,data)=>{ const props:{[key:string]:any} = {}; for(const elm of data) props[elm.key]=elm.value; return { label,props }; }
-);
+//TODO — export type ActionData = { name:string,label:string,props:{[key:string]:any} };
 
-export const parseAction = (data:string):Omit<TypeData,'name'>=>actionParser.tryParse(data);
+//TODO — export const actionParser = seqMap(
+//TODO —     SWORD,
+//TODO —     seqMap(WORD,string(':'),SWORD,(key,_,value)=>({ key,value })).many(),
+//TODO —     (label,data)=>{ const props:{[key:string]:any} = {}; for(const elm of data) props[elm.key]=elm.value; return { label,props }; }
+//TODO — );
+
+//TODO — export const parseAction = (data:string):ActionData=>actionParser.tryParse(data);
 
 export default (data:string):ResourceColType=>parser.tryParse(data);

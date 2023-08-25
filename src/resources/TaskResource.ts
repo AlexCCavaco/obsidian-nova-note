@@ -1,17 +1,16 @@
 import Resource from "./Resource";
+import ResourceColString from "./ResourceColString";
 
 export default class extends Resource {
 
     constructor(){
         super('Task', undefined, {
-            cols:{
-                'status': { label:"Status",type:"text",input:true,multi:false,required:false },
-                'title': { label:"Title",type:"text",input:true,multi:false,required:true },
-                'start': { label:"Start",type:"date",input:true,multi:false,required:false },
-                'done': { label:"Done",type:"check",input:true,multi:false,required:false },
-                'due': { label:"Due",type:"date",input:true,multi:false,required:false },
-                'tags': { label:"Tags",type:"text",input:true,multi:true,required:false }
-            }
+            'status': new ResourceColString('status',"Status",'text',{ input:true,multi:false,required:false }),
+            'title': new ResourceColString('title',"Title",'text',{ input:true,multi:false,required:true }),
+            'start': new ResourceColString('start',"Start",'date',{ input:true,multi:false,required:false }),
+            'done': new ResourceColString('done',"Done",'check',{ input:true,multi:false,required:false }),
+            'due': new ResourceColString('due',"Due",'date',{ input:true,multi:false,required:false }),
+            'tags': new ResourceColString('tags',"Tags",'text',{ input:true,multi:true,required:false })
         });
     }
 

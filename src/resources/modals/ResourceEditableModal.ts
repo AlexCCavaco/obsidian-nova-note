@@ -1,6 +1,5 @@
 import { Modal, Setting, TFile, TextComponent, ValueComponent } from "obsidian";
 import type Resource from "../Resource";
-import type { ResourceColDefType, ResourceColResource, ResourceColStringType, ResourceColType } from "../parser";
 import ResourceInstancesModal, { isInstanceResourceCreator } from "./ResourceInstancesModal";
 import type NovaNotePlugin from "src/main";
 import DataValue from "./components/DataValue.svelte";
@@ -9,6 +8,10 @@ import TypeInstancesModal from "./TypeInstancesModal";
 import { getId } from "src/handlers/idHandler";
 import type { BlockDataElm } from "src/blocks/NovaBlock";
 import { getFileData } from "src/handlers/dataLoader";
+import ResourceColResource from "../ResourceColResource";
+import ResourceColDefType from "../ResourceColDefType";
+import ResourceColString from "../ResourceColString";
+import type ResourceCol from "../ResourceCol";
 
 export default class ResouceEditableModal extends Modal {
 
@@ -35,9 +38,9 @@ export default class ResouceEditableModal extends Modal {
         for(const key in this.resource.cols){
             const col = this.resource.cols[key];
             if(!col.input) continue;
-            if(col.type==='resource') this.addResourceInput(key,col as ResourceColResource);
-            else if(col.type==='type') this.addTypeInput(key,col as ResourceColDefType);
-            else this.addInput(key,col as ResourceColStringType);
+            if(col instanceof ResourceColResource) this.addResourceInput(key,col);
+            else if(col instanceof ResourceColDefType) this.addTypeInput(key,col);
+            else this.addInput(key,col as ResourceColString);
         }
 
         new Setting(contentEl).addButton(btn=>btn.setButtonText("Save").setCta().onClick(this.save.bind(this)));
@@ -97,7 +100,7 @@ export default class ResouceEditableModal extends Modal {
             modal.open();
         }));
     }
-    addInput(name:string,col:ResourceColStringType){
+    addInput(name:string,col:ResourceColString){
         switch(col.type){
             case "number":      this.addText(name,col,value=>parseFloat(value)); break;
             case "text":        this.addText(name,col); break;
@@ -110,22 +113,22 @@ export default class ResouceEditableModal extends Modal {
         }
     }
 
-    addText(name:string,col:ResourceColStringType,call?:(value:string)=>any|null){
+    addText(name:string,col:ResourceColString,call?:(value:string)=>any|null){
         const set = new Setting(this.contentEl).setName(col.label).setDesc(describeColumn(col));
         if(col.multi) this.multiHandler(name,col,set,(set,cb)=>set.addText(cb),call);
         else set.addText((text)=>text.onChange((value)=>{ if(call) value=call(value); this.data[name] = value; }));
     }
-    addColorInput(name:string,col:ResourceColStringType){
+    addColorInput(name:string,col:ResourceColString){
         const set = new Setting(this.contentEl).setName(col.label).setDesc(describeColumn(col));
         if(col.multi) this.multiHandler(name,col,set,(set,cb)=>set.addColorPicker(cb));
         else set.addColorPicker((text)=>text.onChange((value)=>{ this.data[name] = value; }));
     }
-    addToggleInput(name:string,col:ResourceColStringType){
+    addToggleInput(name:string,col:ResourceColString){
         const set = new Setting(this.contentEl).setName(col.label).setDesc(describeColumn(col));
         if(col.multi) this.multiHandler(name,col,set,(set,cb)=>set.addToggle(cb),val=>!!val);
         else set.addToggle((text)=>text.onChange((value)=>{ this.data[name] = !!value; }));
     }
-    addDateTimeInput(name:string,col:ResourceColStringType,format:string){
+    addDateTimeInput(name:string,col:ResourceColString,format:string){
         const set = new Setting(this.contentEl).setName(col.label).setDesc(describeColumn(col));
         if(col.multi) this.multiHandler(name,col,set,(set,cb)=>set.addColorPicker(cb));
         else set.addMomentFormat((text)=>text.setDefaultFormat(format).onChange((value)=>{ this.data[name] = value; }));
@@ -144,7 +147,7 @@ export default class ResouceEditableModal extends Modal {
             });
         };
     }
-    multiHandler<Comp extends ValueComponent<any>>(name:string,col:ResourceColStringType,set:Setting,addCall:(set:Setting,cb:(comp:Comp)=>any)=>void,formatCall?:(value:string)=>any|null){
+    multiHandler<Comp extends ValueComponent<any>>(name:string,col:ResourceColString,set:Setting,addCall:(set:Setting,cb:(comp:Comp)=>any)=>void,formatCall?:(value:string)=>any|null){
         const add = this.multiHandlerBase(name);
         const addEvent = (ev:KeyboardEvent,text:Comp)=>{
             const key = ev.key.toLowerCase();
@@ -164,12 +167,13 @@ export default class ResouceEditableModal extends Modal {
 
 }
 
-function describeColumn(col:Exclude<ResourceColType,{input:false}>){
+function describeColumn(col:Exclude<ResourceCol,{input:false}>):string{
     const multi = col.multi ? 'Multiple • ' : '';
     const required = col.required ? ' • Required' : '';
-    switch(col.type){
+    if(col instanceof ResourceColResource) return multi + "Resource • " + col.resource + required;
+    if(col instanceof ResourceColDefType) return multi + "Type • " + col.value + required;
+    if(col instanceof ResourceColString) switch(col.type){
         case "number":  return multi + "Number" + required;
-        case "resource":return multi + "Resource • " + col.resource + required;
         case "text":    return multi + "Text" + required;
         case "check":   return multi + "Check" + required;
         case "link":    return multi + "Link" + required;
@@ -177,6 +181,6 @@ function describeColumn(col:Exclude<ResourceColType,{input:false}>){
         case "time":    return multi + "Time" + required;
         case "datetime":return multi + "Date and Time" + required;
         case "color":   return multi + "Color" + required;
-        case "type":    return multi + "Type • " + col.value + required;
     }
+    return '';
 }
