@@ -6,7 +6,7 @@ import ResourceColResource from "./ResourceColResource";
 import ResourceColDefType from "./ResourceColDefType";
 import ResourceColValue from "./ResourceColValue";
 import type ResourceColString from "./ResourceColString";
-import { generateId, getId } from "src/handlers/idHandler";
+import { generateId, getId, getIdOrGenerate } from "src/data/IdHandler";
 import FileData from "src/data/FileData";
 import { processOPR } from "src/data/ConditionalData";
 
@@ -68,8 +68,12 @@ export default class ResourceItem extends FileDataElm {
         this.data[key] = val;
     }
 
-    async getId(){
-        return await getId(this.nova,new FileData(this.nova,this.file));
+    getId(){
+        return getId(this.nova,new FileData(this.nova,this.file));
+    }
+    
+    async getIdOrGenerate(){
+        return await getIdOrGenerate(this.nova,new FileData(this.nova,this.file));
     }
     
     async generateId(){

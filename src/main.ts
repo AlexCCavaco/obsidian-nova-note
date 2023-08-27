@@ -1,6 +1,6 @@
 import { addIcon, Editor, MarkdownView, Plugin, TFile, TFolder } from 'obsidian';
 import { SettingsTab, DefaultSettings, type Settings } from "./SettingsTab";
-import { addBaseResources, addResourceToFile, createResourceOnFile, fileChanged, fileDeleted, loadResourceOfFile } from './resources';
+import { addBaseResources, addResourceToFile, createResourceOnFile, fileChanged, fileDeleted, loadFile } from './resources';
 import { codeBlockProcessor } from './blocks';
 import { openFileFromEvent } from './handlers/leafHandler';
 import { init as dataLoaderInit } from "./data/DataLoader";
@@ -55,7 +55,7 @@ export default class NovaNotePlugin extends Plugin {
 			conditionalDataInit(this);
 			addBaseResources(this);
 
-			this.app.metadataCache.on('resolve',(file)=>loadResourceOfFile(this,file));
+			this.app.metadataCache.on('resolve',(file)=>loadFile(this,file));
 			this.app.metadataCache.on('changed',(file,data,cache)=>fileChanged(this,file,data,cache));
 			this.app.metadataCache.on('deleted',(file,cache)=>fileDeleted(this,file,cache));
 			

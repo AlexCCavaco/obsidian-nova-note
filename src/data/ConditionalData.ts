@@ -1,6 +1,6 @@
 import { isObjValType, isOfValType, type OPERATION_TYPE, type OprType, type ValType } from "src/parser";
 import type { BlockDataVal } from "../blocks/NovaBlock";
-import { getId } from "../handlers/idHandler";
+import { getIdOrGenerate } from "./IdHandler";
 import { isAsync } from "../handlers/tools";
 import FileData from "src/data/FileData";
 import FileDataElm from "src/data/FileDataElm";
@@ -121,7 +121,7 @@ async function processDataLocation(props:string[],blockData:FileDataElm,curData:
             return thisData??{};
         case '$this':
             splice();
-            return await getId(nova,curData);
+            return await getIdOrGenerate(nova,curData);
     }
     if(props[0][0]!=='$') return blockData.data;
     return {

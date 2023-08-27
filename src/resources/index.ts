@@ -17,6 +17,7 @@ import ResourceColResource, { type ResourceColResourceType } from "./ResourceCol
 import type { ResourceColDefTypeType } from "./ResourceColDefType";
 import ResourceColDefType from "./ResourceColDefType";
 import parse from "./parser";
+import { addId, removeId } from "src/data/IdHandler";
 
 export type ResourceList = { [key:string]:{ [key:string]:string } };
 export const resources:{ [key:string]:Resource } = {};
@@ -33,25 +34,32 @@ export function addBaseResources(nova:NovaNotePlugin){
 
 export function loadResources(nova:NovaNotePlugin){
     return ()=>{
-        for(const file of nova.app.vault.getMarkdownFiles()) loadResourceOfFile(nova,file);
+        for(const file of nova.app.vault.getMarkdownFiles()) loadFile(nova,file);
         console.info(`Loaded ${count} Resources`);
     }
 }
-export function loadResourceOfFile(nova:NovaNotePlugin,file:TFile){
+export function loadFile(nova:NovaNotePlugin,file:TFile){
     const meta = nova.app.metadataCache.getFileCache(file);
-    if(meta && meta.frontmatter && meta.frontmatter['nova-data']) try {
+    if(!meta || !meta.frontmatter) return;
+    if(meta.frontmatter['nova-data']) try {
         addResources(nova,meta.frontmatter['nova-data'],file);
     } catch(err){
         errorNotice(err,`${file.path}: `);
     }
+    if(meta.frontmatter['id']) addId(meta.frontmatter['id'],file);
 }
 
 export function fileChanged(nova:NovaNotePlugin,file:TFile, data:string, meta:CachedMetadata){
-    if(meta && meta.frontmatter && meta.frontmatter['nova-data']) updateResources(nova,meta.frontmatter['nova-data'],file);
+    if(!meta || !meta.frontmatter) return;
+    if(meta.frontmatter['nova-data']) updateResources(nova,meta.frontmatter['nova-data'],file);
+    if(meta.frontmatter['id']) addId(meta.frontmatter['id'],file);
+    else removeId(meta.frontmatter['id']);
 }
 
 export function fileDeleted(nova:NovaNotePlugin,file:TFile, prevMeta:CachedMetadata|null){
-    if(prevMeta && prevMeta.frontmatter && prevMeta.frontmatter['nova-data']) deleteResources(prevMeta.frontmatter['nova-data'],file);
+    if(!prevMeta || !prevMeta.frontmatter) return;
+    if(prevMeta.frontmatter['nova-data']) deleteResources(prevMeta.frontmatter['nova-data'],file);
+    if(prevMeta.frontmatter['id']) removeId(prevMeta.frontmatter['id']);
 }
 
 /*/===/*/

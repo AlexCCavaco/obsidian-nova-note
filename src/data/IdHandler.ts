@@ -29,9 +29,14 @@ export function removeId(id:string){
     if(files[id]) delete files[id];
 }
 
-export async function getId(nova:NovaNotePlugin,fileData:FileData){
+export async function getIdOrGenerate(nova:NovaNotePlugin,fileData:FileData){
     if(fileData.meta&&fileData.meta.frontmatter&&fileData.meta.frontmatter['nova-id']) return fileData.meta.frontmatter['nova-id'];
     return await generateId(nova,fileData.file);
+}
+
+export function getId(nova:NovaNotePlugin,fileData:FileData){
+    if(fileData.meta&&fileData.meta.frontmatter&&fileData.meta.frontmatter['nova-id']) return fileData.meta.frontmatter['nova-id'];
+    return null;
 }
 
 export async function generateId(nova:NovaNotePlugin,file:TFile){

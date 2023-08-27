@@ -4,7 +4,7 @@ import ResourceInstancesModal, { isInstanceResourceCreator } from "./ResourceIns
 import type NovaNotePlugin from "src/main";
 import DataValue from "./components/DataValue.svelte";
 import TypeInstancesModal from "./TypeInstancesModal";
-import { getId } from "src/handlers/idHandler";
+import { getIdOrGenerate } from "src/data/IdHandler";
 import ResourceColResource from "../ResourceColResource";
 import ResourceColDefType from "../ResourceColDefType";
 import ResourceColString from "../ResourceColString";
@@ -85,12 +85,12 @@ export default class ResouceEditableModal extends Modal {
             const modal = new ResourceInstancesModal(this.nova,col.resource,async (item)=>{
                 if(isInstanceResourceCreator(item)){
                     new ResouceEditableModal(this.nova,col.resource,this.parent,async (data)=>{
-                        const id = await getId(this.nova,data);
+                        const id = await getIdOrGenerate(this.nova,data);
                         if(col.multi) add(id);
                         else this.data[name] = id;
                     });
                 } else {
-                    const id = await getId(this.nova,item);
+                    const id = await getIdOrGenerate(this.nova,item);
                     if(col.multi) add(id);
                     else this.data[name] = id;
                 }
