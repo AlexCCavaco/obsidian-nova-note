@@ -1,17 +1,16 @@
 import { SuggestModal, TFile } from "obsidian";
-import { getFileData } from "src/handlers/dataLoader";
 import type NovaNotePlugin from "src/main";
-import type { TypeData } from "../parser";
-import { getType } from "..";
+import type TypeData from "src/data/TypeData";
+import type TypeDataElm from "src/data/TypeDataElm";
 
-export default class extends SuggestModal<TypeData> {
+export default class extends SuggestModal<TypeDataElm> {
 
-    nova:NovaNotePlugin;
-    type:string;
-    file:TFile;
-    cb:(type:TypeData)=>void;
+    nova: NovaNotePlugin;
+    type: TypeData;
+    file: TFile;
+    cb:(type:TypeDataElm)=>void;
 
-    constructor(nova:NovaNotePlugin,type:string,file:TFile,cb:(item:TypeData)=>void){
+    constructor(nova:NovaNotePlugin,type:TypeData,file:TFile,cb:(item:TypeDataElm)=>void){
         super(nova.app);
         this.nova = nova;
         this.cb = cb;
@@ -19,20 +18,18 @@ export default class extends SuggestModal<TypeData> {
         this.file = file;
     }
 
-    async getSuggestions(query: string): Promise<(TypeData)[]> {
-        const block = getFileData(this.nova,this.file);
-        const data = await getType(block,this.type);
-        return !data ? [] : data.filter(res=>(res.label).toLowerCase().includes(query.toLowerCase()));
+    async getSuggestions(query: string): Promise<(TypeDataElm)[]> {
+        return this.type.list();
     }
     
-    renderSuggestion(value: TypeData, el: HTMLElement){
+    renderSuggestion(value: TypeDataElm, el: HTMLElement){
         let propStr = '';
         for(const key in value.props) propStr += (propStr===''?'':', ') + key+': '+value.props.toString();
         el.createEl("div", { text: value.label });
         el.createEl("small", { text: propStr });
     }
 
-    onChooseSuggestion(item: TypeData, evt: MouseEvent | KeyboardEvent) {
+    onChooseSuggestion(item: TypeDataElm, evt: MouseEvent | KeyboardEvent) {
         if(this.cb) this.cb(item);
     }
 

@@ -1,14 +1,14 @@
 import type { DISPLAY_TYPE, FROM_TYPE, VIEW_CLAUSE_TYPE, VIEW_TYPE } from "./definitions";
 import Block from "./components/Block.svelte";
-import type { OPR_TYPE } from "src/parser";
+import type { OprType } from "src/parser";
 import NovaView from "./NovaView";
 import { writable, type Writable } from "svelte/store";
 import type NovaNotePlugin from "src/main";
-import { loadFromAll, loadFromLocal, loadFromPath, loadFromResource, loadFromTag, type FileData, getCurFileData } from "../handlers/dataLoader";
+import { loadFromAll, loadFromLocal, loadFromPath, loadFromResource, loadFromTag } from "../data/DataLoader";
+import FileData from "src/data/FileData";
+import type FileDataElm from "src/data/FileDataElm";
 
 export type BlockDataVal = {[key:string]:unknown|{lazy:true,get:()=>unknown}};
-export type BlockDataElm = (FileData & { data:BlockDataVal });
-export type BlockData = BlockDataElm[];
 
 export default class {
 
@@ -21,9 +21,9 @@ export default class {
     type:   DISPLAY_TYPE;
     from:   FROM_TYPE;
     focus:  Writable<string|null>;
-    on:     OPR_TYPE;
+    on:     OprType;
     views:  NovaView[];
-    data:   Writable<BlockData>;
+    data:   Writable<FileDataElm[]>;
     file:   FileData;
 
     constructor(nova:NovaNotePlugin){
@@ -37,13 +37,13 @@ export default class {
         this.on     = true;
         this.views  = [];
         this.data   = writable([]);
-        this.file   = getCurFileData(nova);
+        this.file   = FileData.getCurrent(nova);
     }
 
     setType(type?:DISPLAY_TYPE){ this.type = type ?? 'data'; }
     setFrom(from:FROM_TYPE){ this.from = from; }
     setFocus(focus:string){ this.focus.set(focus); }
-    setOn(on:OPR_TYPE){ this.on = on; }
+    setOn(on:OprType){ this.on = on; }
 
     addView(type:VIEW_TYPE,code:string,label:string,clauses:VIEW_CLAUSE_TYPE[]){
         const view = new NovaView(this,type,code,label);
@@ -72,20 +72,20 @@ export default class {
     }
 
     async loadData(){
-        const data:BlockData = await loadData(this.nova,this.from,this.on);
+        const data:FileDataElm[] = await loadData(this.nova,this.from,this.on);
         this.data.set(data);
     }
     onDataChange(){}
 
 }
 
-async function loadData(nova:NovaNotePlugin,from:FROM_TYPE,on:OPR_TYPE):Promise<BlockData>{
+async function loadData(nova:NovaNotePlugin,from:FROM_TYPE,on:OprType):Promise<FileDataElm[]>{
     switch(from.type){
-        case "tag":      return await loadFromTag(nova,from.value,on);
-        case "resource": return await loadFromResource(nova,from.value,on);
-        case "all":      return await loadFromAll(nova,on);
-        case "local":    return await loadFromLocal(nova,from.value,on);
-        case "path":     return await loadFromPath(nova,from.value,on);
+        case "tag":      return await loadFromTag(from.value,on);
+        case "resource": return await loadFromResource(from.value,on);
+        case "all":      return await loadFromAll(on);
+        case "local":    return await loadFromLocal(from.value,on);
+        case "path":     return await loadFromPath(from.value,on);
     }
     return [];
 }

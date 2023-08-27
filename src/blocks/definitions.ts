@@ -1,4 +1,4 @@
-import type { OPR_TYPE } from "src/parser";
+import type { OprType } from "src/parser";
 
 export type DISPLAY_TYPE = 'tasks' | 'data';
 export const displayData = ['tasks','data'];
@@ -32,13 +32,13 @@ export type BLOCK_TYPE = { block:string } & (
 
 export type DISPLAY_CLAUSE_TYPE =
     { clause:'from',source:FROM_TYPE } |
-    { clause:'on',on:OPR_TYPE } |
+    { clause:'on',on:OprType } |
     { clause:'focus',focus:string } |
     { clause:'view',type:VIEW_TYPE,id:string,label:string,clauses:VIEW_CLAUSE_TYPE[] };
 
 export type VIEW_CLAUSE_TYPE =
     { clause:'order',order:{ key:string,desc?:boolean }[] } |
     { clause:'group',group:string[] } |
-    { clause:'alter',alter:{ lhs:string,rhs:OPR_TYPE }[] } |
-    { clause:'shows',shows:{ key:OPR_TYPE,label?:string }[] } |
-    { clause:'where',where:OPR_TYPE };
+    { clause:'alter',alter:{ lhs:string,rhs:OprType }[] } |
+    { clause:'shows',shows:{ key:OprType,label?:string }[] } |
+    { clause:'where',where:OprType };

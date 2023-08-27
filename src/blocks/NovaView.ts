@@ -1,15 +1,16 @@
-import { isObjValType, isOfValType, type OPR_TYPE } from "src/parser";
+import { isObjValType, isOfValType, type OprType } from "src/parser";
 import View from "./components/View.svelte";
 import type { VIEW_TYPE } from "./definitions";
-import { processConditions, type FileData, processOPR } from "../handlers/dataLoader";
 import type NovaBlock from "./NovaBlock";
 import { writable, type Writable } from "svelte/store";
-import type { BlockData, BlockDataElm } from "./NovaBlock";
+import type FileData from "src/data/FileData";
+import type FileDataElm from "src/data/FileDataElm";
+import { processConditions, processOPR } from "src/data/ConditionalData";
 
 export type BaseOptsType = { [key:string]:unknown };
 export type BaseDataType = { [key:string]:{ value:unknown,label:string } };
 
-export type ViewDataElm<OptsT extends BaseOptsType=BaseOptsType,DataT extends BaseDataType=BaseDataType> = { opts:OptsT,data:DataT,block:BlockDataElm,link:string };
+export type ViewDataElm<OptsT extends BaseOptsType=BaseOptsType,DataT extends BaseDataType=BaseDataType> = { opts:OptsT,data:DataT,block:FileDataElm,link:string };
 export type ViewData<OptsT extends BaseOptsType=BaseOptsType,DataT extends BaseDataType=BaseDataType> = ViewDataElm<OptsT,DataT>[];
 
 export default class {
@@ -22,9 +23,9 @@ export default class {
 
     order: { key:string,desc?:boolean }[];
     group: string[];
-    alter: { lhs:string,rhs:OPR_TYPE }[];
-    shows: { key:OPR_TYPE,label?:string }[];
-    where: OPR_TYPE;
+    alter: { lhs:string,rhs:OprType }[];
+    shows: { key:OprType,label?:string }[];
+    where: OprType;
 
     data:  Writable<ViewData>;
     block: NovaBlock;
@@ -64,7 +65,7 @@ export default class {
         });
     }
 
-    async loadData(blockData:BlockData){
+    async loadData(blockData:FileDataElm[]){
         const nData:ViewData = [];
         let index = 0;
         for(const data of blockData){

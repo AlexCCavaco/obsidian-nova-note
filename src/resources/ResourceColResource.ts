@@ -1,5 +1,6 @@
-import type { OPR_TYPE } from "src/parser";
+import type { OprType } from "src/parser";
 import ResourceCol, { type ResourceColOpts } from "./ResourceCol";
+import type Resource from "./Resource";
 
 export type ResourceColResourceType = {
     label: string,
@@ -8,17 +9,17 @@ export type ResourceColResourceType = {
     multi: boolean,
     required: boolean,
     resource: string|null,
-    on: OPR_TYPE
+    on: OprType
 };
 
 export default class ResourceColResource extends ResourceCol {
 
-    resource: string|null;
-    on: OPR_TYPE;
+    resource: Resource;
+    on: OprType;
 
-    constructor(name:string, label:string, resource?:string|null, on?:OPR_TYPE, opts?:ResourceColOpts ){
+    constructor(name:string, label:string, resource:Resource, on?:OprType, opts?:ResourceColOpts ){
         super(name,label,opts);
-        this.resource = resource??null;
+        this.resource = resource;
         this.on = on ?? null;
     }
 

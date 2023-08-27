@@ -1,3 +1,4 @@
+import type TypeData from "src/data/TypeData";
 import ResourceCol, { type ResourceColOpts } from "./ResourceCol";
 
 export type ResourceColDefTypeType = {
@@ -12,11 +13,11 @@ export type ResourceColDefTypeType = {
 export default class ResourceColDefType extends ResourceCol {
 
     input: true;
-    value: string|null;
+    type: TypeData;
 
-    constructor(name:string, label:string, value?:string|null, opts?:ResourceColOpts ){
+    constructor(name:string, label:string, type:TypeData, opts?:ResourceColOpts ){
         super(name,label,opts);
-        this.value = value??null;
+        this.type = type;
     }
 
 }

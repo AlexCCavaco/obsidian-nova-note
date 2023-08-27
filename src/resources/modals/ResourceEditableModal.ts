@@ -3,22 +3,21 @@ import type Resource from "../Resource";
 import ResourceInstancesModal, { isInstanceResourceCreator } from "./ResourceInstancesModal";
 import type NovaNotePlugin from "src/main";
 import DataValue from "./components/DataValue.svelte";
-import { getResource } from "..";
 import TypeInstancesModal from "./TypeInstancesModal";
 import { getId } from "src/handlers/idHandler";
-import type { BlockDataElm } from "src/blocks/NovaBlock";
-import { getFileData } from "src/handlers/dataLoader";
 import ResourceColResource from "../ResourceColResource";
 import ResourceColDefType from "../ResourceColDefType";
 import ResourceColString from "../ResourceColString";
 import type ResourceCol from "../ResourceCol";
+import FileDataElm, { FileDataElmFromFileData } from "src/data/FileDataElm";
+import FileData from "src/data/FileData";
 
 export default class ResouceEditableModal extends Modal {
 
     data: {[key:string]:any};
     resource: Resource;
     nova:NovaNotePlugin;
-    cb?: (data:BlockDataElm)=>void;
+    cb?: (data:FileDataElm)=>void;
     parent:TFile;
     file?:TFile;
 
@@ -52,8 +51,8 @@ export default class ResouceEditableModal extends Modal {
 
     async save(){
         if(!this.file){
-            const curBlock = { file:this.parent,meta:this.nova.app.metadataCache.getFileCache(this.parent) };
-            const block = !this.resource.file ? { ...curBlock,data:{} } : { file:this.resource.file,meta:this.nova.app.metadataCache.getFileCache(this.resource.file),data:this.data };
+            const curBlock = new FileData(this.nova,this.parent);
+            const block = !this.resource.file ? FileDataElmFromFileData(curBlock,{}) : new FileDataElm(this.nova,this.resource.file,this.data);
             const path = await this.resource.genPath(block,curBlock);
             const name = await this.resource.genFileName(block,curBlock);
             this.file = await this.nova.app.vault.create(path + '/' + name + '.md','');
@@ -61,7 +60,7 @@ export default class ResouceEditableModal extends Modal {
         this.nova.app.fileManager.processFrontMatter(this.file,(fm)=>{
             for(const key in this.data) fm[key] = this.data[key];
         });
-        const block = Object.assign({},getFileData(this.nova, this.file),{data:this.data});
+        const block = new FileDataElm(this.nova, this.file,this.data);
         if(this.cb) this.cb(block);
         this.close();
     }
@@ -69,9 +68,9 @@ export default class ResouceEditableModal extends Modal {
     addTypeInput(name:string,col:ResourceColDefType){
         const set = new Setting(this.contentEl).setName(col.label).setDesc(describeColumn(col));
         const add = this.multiHandlerBase(name);
-        if(col.value==null) return null;
+        if(col.type==null) return null;
         set.addButton(btn=>btn.setButtonText("Change").setCta().onClick(()=>{
-            const modal = new TypeInstancesModal(this.nova,col.value as string,this.parent,(item)=>{
+            const modal = new TypeInstancesModal(this.nova,col.type,this.parent,(item)=>{
                 if(col.multi) add(item.name);
                 else { this.data[name] = item.name; }
             });
@@ -83,10 +82,9 @@ export default class ResouceEditableModal extends Modal {
         const add = this.multiHandlerBase(name);
         if(col.resource==null) return null;
         set.addButton(btn=>btn.setButtonText("Change").setCta().onClick(()=>{
-            const modal = new ResourceInstancesModal(this.nova,col.resource as string,async (item)=>{
-                const resource = getResource(col.resource as string);
+            const modal = new ResourceInstancesModal(this.nova,col.resource,async (item)=>{
                 if(isInstanceResourceCreator(item)){
-                    new ResouceEditableModal(this.nova,resource,this.parent,async (data)=>{
+                    new ResouceEditableModal(this.nova,col.resource,this.parent,async (data)=>{
                         const id = await getId(this.nova,data);
                         if(col.multi) add(id);
                         else this.data[name] = id;
@@ -170,8 +168,8 @@ export default class ResouceEditableModal extends Modal {
 function describeColumn(col:Exclude<ResourceCol,{input:false}>):string{
     const multi = col.multi ? 'Multiple • ' : '';
     const required = col.required ? ' • Required' : '';
-    if(col instanceof ResourceColResource) return multi + "Resource • " + col.resource + required;
-    if(col instanceof ResourceColDefType) return multi + "Type • " + col.value + required;
+    if(col instanceof ResourceColResource) return multi + "Resource • " + col.resource.name + required;
+    if(col instanceof ResourceColDefType) return multi + "Type • " + col.type.name + required;
     if(col instanceof ResourceColString) switch(col.type){
         case "number":  return multi + "Number" + required;
         case "text":    return multi + "Text" + required;

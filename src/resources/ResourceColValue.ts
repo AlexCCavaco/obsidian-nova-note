@@ -1,4 +1,4 @@
-import type { OPR_TYPE } from "src/parser";
+import type { OprType } from "src/parser";
 import ResourceCol, { type ResourceColOpts } from "./ResourceCol";
 
 export type ResourceColValueType = {
@@ -6,18 +6,18 @@ export type ResourceColValueType = {
     type: 'value',
     input: false,
     multi: false,
-    value: OPR_TYPE,
+    value: OprType,
     required: false
 };
 
 export default class ResourceColValue extends ResourceCol {
 
     input: false;
-    value: OPR_TYPE;
+    value: OprType;
     required: false;
     multi: false;
 
-    constructor(name:string, label:string, value?:OPR_TYPE, opts?:ResourceColOpts ){
+    constructor(name:string, label:string, value:OprType, opts?:ResourceColOpts ){
         super(name,label,opts);
         this.value = value??null;
     }

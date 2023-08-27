@@ -1,9 +1,10 @@
 import { parseImageString, type ParsedImageString } from "./parser";
-import type { BlockDataElm } from "../NovaBlock";
 import { setIcon } from "obsidian";
-import { processOPR, type FileData } from "../../handlers/dataLoader";
+import type FileData from "src/data/FileData";
+import type FileDataElm from "src/data/FileDataElm";
+import { processOPR } from "src/data/ConditionalData";
 
-export async function makeIcon(iconStr:string, data:BlockDataElm, fileData:FileData){
+export async function makeIcon(iconStr:string, data:FileDataElm, fileData:FileData){
     iconStr = iconStr.trim();
     const elm = document.createElement('div');
     if(iconStr[0]==='$'){
@@ -15,7 +16,7 @@ export async function makeIcon(iconStr:string, data:BlockDataElm, fileData:FileD
     return elm;
 }
 
-export async function makeImage(name:string,imageStr:string, data:BlockDataElm, fileData:FileData):Promise<HTMLElement> {
+export async function makeImage(name:string,imageStr:string, data:FileDataElm, fileData:FileData):Promise<HTMLElement> {
     imageStr = imageStr.trim();
     if(imageStr[0]==='$'){
         const res = parseImageString(imageStr);
@@ -29,7 +30,7 @@ export async function makeImage(name:string,imageStr:string, data:BlockDataElm, 
     return elm;
 }
 
-async function makeIconImage(elm:HTMLElement,res:ParsedImageString,data:BlockDataElm,fileData:FileData){
+async function makeIconImage(elm:HTMLElement,res:ParsedImageString,data:FileDataElm,fileData:FileData){
     setIcon(elm,res.icon);
     for(const prop of res.props){
         const value = await processOPR(data,fileData,prop.value,data.meta?.frontmatter);

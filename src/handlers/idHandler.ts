@@ -1,7 +1,7 @@
 import type { TFile } from "obsidian";
 import { nanoid } from "nanoid";
 import type NovaNotePlugin from "src/main";
-import type { FileData } from "./dataLoader";
+import type FileData from "src/data/FileData";
 
 const files:{[key:string]:TFile} = {};
 
