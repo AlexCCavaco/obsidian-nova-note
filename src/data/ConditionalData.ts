@@ -8,24 +8,26 @@ import type NovaNotePlugin from "src/main";
 
 let nova:NovaNotePlugin;
 
+type ConditionalValue = string|boolean|number|unknown[]|null;
+
 export function init(novaPlugin:NovaNotePlugin) {
     nova = novaPlugin;
 }
 
-export async function processConditions(data:FileDataElm,curData:FileData,conditions:OprType,thisData?:BlockDataVal):Promise<boolean>{
-    return !!await processOPR(data,curData,conditions,thisData);
+export async function processConditions(locationData:FileDataElm,currentData:FileData,conditions:OprType,thisData?:BlockDataVal):Promise<boolean>{
+    return !!await processOPR(locationData,currentData,conditions,thisData);
 }
 
-export async function processOPR(data:FileDataElm,curData:FileData,conditions:OprType,thisData?:BlockDataVal){
+export async function processOPR(locationData:FileDataElm,currentData:FileData,conditions:OprType,thisData?:BlockDataVal){
     return formType(await processCondition(conditions));
 
     async function processCondition(condition:OprType):Promise<ValType>{
         if(isOfValType(condition)){
             if(!isObjValType(condition)||(condition.type!=='key'&&condition.type!=='fn'&&condition.type!=='tag')) return condition;
-            const meta = data.getMetadata();
+            const meta = locationData.getMetadata();
             if(condition.type==='tag') return (meta && meta.tags && meta.tags.some(t=>t.tag===condition.value))??false;
             const props = (condition.type==='fn' ? condition.value[0] : condition.value).split('.');
-            let value:any = await processDataLocation(props,data,curData,thisData);
+            let value = await processDataLocation(props,locationData,currentData,thisData);
             for(const prop of props){
                 if(value==null||value[prop]==null){ value = null; break; }
                 let nVal = value[prop];
@@ -54,16 +56,16 @@ export async function processOPR(data:FileDataElm,curData:FileData,conditions:Op
         const nRhs = await processCondition(rhs);
         switch(op){
             case "!":   return !nRhs;
-            case "-":   return numberCalc(nLft,nRhs,(v1,v2)=>(v1 - v2));
-            case "+":   return numberCalc(nLft,nRhs,(v1,v2)=>(v1 + v2));
-            case "*":   return numberCalc(nLft,nRhs,(v1,v2)=>(v1 * v2));
-            case "/":   return numberCalc(nLft,nRhs,(v1,v2)=>(v1 / v2));
+            case "-":   return numberCalc(nLft,nRhs,(v1,v2)=>(parseNumber(v1) - parseNumber(v2)));
+            case "+":   return numberCalc(nLft,nRhs,(v1,v2)=>(addStringsOrNumbers(v1,v2)));
+            case "*":   return numberCalc(nLft,nRhs,(v1,v2)=>(parseNumber(v1) * parseNumber(v2)));
+            case "/":   return numberCalc(nLft,nRhs,(v1,v2)=>(parseNumber(v1) / parseNumber(v2)));
             case "=":   return nLft === nRhs;
             case "!=":  return nLft !== nRhs;
-            case ">":   return nullableOrCalc(nLft,nRhs,(v1,v2)=>(v1 > v2));
-            case ">=":  return nullableOrCalc(nLft,nRhs,(v1,v2)=>(v1 >= v2));
-            case "<":   return nullableOrCalc(nLft,nRhs,(v1,v2)=>(v1 < v2));
-            case "<=":  return nullableOrCalc(nLft,nRhs,(v1,v2)=>(v1 <= v2));
+            case ">":   return nullableOrCalc(nLft,nRhs,(v1,v2)=>((v1??0) >  (v2??0)));
+            case ">=":  return nullableOrCalc(nLft,nRhs,(v1,v2)=>((v1??0) >= (v2??0)));
+            case "<":   return nullableOrCalc(nLft,nRhs,(v1,v2)=>((v1??0) <  (v2??0)));
+            case "<=":  return nullableOrCalc(nLft,nRhs,(v1,v2)=>((v1??0) <= (v2??0)));
             case "and": return (nLft && nRhs) || false;
             case "or":  return nLft || nRhs;
             case "in":  return (Array.isArray(nRhs) || typeof nRhs === 'string') ?  nRhs.includes(nLft) : false;
@@ -77,12 +79,29 @@ function formType(res:ValType){
     return isObjValType(res) ? res.value : res;
 }
 
-function nullableOrCalc(lhs:ValType,rhs:ValType,calc:(lhs:any,rhs:any)=>boolean):boolean{
+function parseNumber(val:ConditionalValue):number{
+    if(typeof val === 'number') return val;
+    if(val==null) return 0;
+    return parseFloat(val.toString());
+}
+function parseStringOrNumber(val:ConditionalValue):number|string{
+    if(typeof val === 'number') return val;
+    if(val==null) return 0;
+    return val.toString();
+}
+function addStringsOrNumbers(val1:ConditionalValue,val2:ConditionalValue):number|string{
+    const v1 = parseStringOrNumber(val1);
+    const v2 = parseStringOrNumber(val2);
+    if(typeof v1 === 'string' || typeof v2 === 'string') return v1.toString() + v2.toString();
+    return v1 + v2;
+}
+
+function nullableOrCalc(lhs:ValType,rhs:ValType,calc:(lhs:ConditionalValue,rhs:ConditionalValue)=>boolean):boolean{
     const nLhs = isObjValType(lhs) ? lhs.value : lhs;
     const nRhs = isObjValType(rhs) ? rhs.value : rhs;
     return calc(nLhs,nRhs)
 }
-function numberCalc(lhs:ValType,rhs:ValType,calc:(lhs:any,rhs:any)=>number|string):Extract<ValType,{type:'number'|'string'}>{
+function numberCalc(lhs:ValType,rhs:ValType,calc:(lhs:ConditionalValue,rhs:ConditionalValue)=>number|string):Extract<ValType,{type:'number'|'string'}>{
     const nLhs = isObjValType(lhs) ? lhs.value : lhs;
     const nRhs = isObjValType(rhs) ? rhs.value : rhs;
     const res = calc(nLhs,nRhs);
@@ -125,12 +144,12 @@ async function processDataLocation(props:string[],blockData:FileDataElm,curData:
     }
     if(props[0][0]!=='$') return blockData.data;
     return {
-        '$count': async (arr:ValType,on?:OprType)=>{let nArr = []; if(on) nArr = formArray(arr).filter(async (val:any)=>await processOPR(blockData,curData,on,val)); return nArr.length; },
-        '$filter':async (arr:ValType,on:OprType)=>formArray(arr).filter(async (val:any)=>await processOPR(blockData,curData,on,val)),
-        '$some':  async (arr:ValType,on:OprType)=>formArray(arr).some(async (val:any)=>await processConditions(blockData,curData,on,val)),
-        '$every': async (arr:ValType,on:OprType)=>formArray(arr).every(async (val:any)=>await processConditions(blockData,curData,on,val)),
-        '$if':    async (val:OprType,res:OprType,els?:OprType)=>((await processOPR(blockData,curData,val))?(await processOPR(blockData,curData,res)):(els?await processOPR(blockData,curData,els):null)),
-        '$path':  async (val:OprType)=>(blockData.file.parent.path + '/' + await processOPR(blockData,curData,val)),
+        '$count':  async (arr:ValType,on?:OprType)=>{let nArr = []; if(on) nArr = formArray(arr).filter(async (val:any)=>await processOPR(blockData,curData,on,val)); return nArr.length; },
+        '$filter': async (arr:ValType,on:OprType)=>formArray(arr).filter(async (val:any)=>await processOPR(blockData,curData,on,val)),
+        '$some':   async (arr:ValType,on:OprType)=>formArray(arr).some(async (val:any)=>await processConditions(blockData,curData,on,val)),
+        '$every':  async (arr:ValType,on:OprType)=>formArray(arr).every(async (val:any)=>await processConditions(blockData,curData,on,val)),
+        '$if':     async (val:OprType,res:OprType,els?:OprType)=>((await processOPR(blockData,curData,val))?(await processOPR(blockData,curData,res)):(els?await processOPR(blockData,curData,els):null)),
+        '$path':   async (val:OprType)=>(blockData.file.parent.path + '/' + await processOPR(blockData,curData,val)),
     }
 
     function splice(){ props.splice(0,1); }

@@ -1,7 +1,7 @@
 {
-	"name": "obsidian-nova-note",
+	"name": "nova-note",
 	"version": "0.0.1",
-	"description": "Create Dynamic Notes and Improve Note Navigation in Obsidian",
+	"description": "Create Dynamic Notes and Improve Navigation in Obsidian",
 	"main": "./src/main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
