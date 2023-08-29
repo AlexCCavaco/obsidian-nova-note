@@ -33,10 +33,9 @@ export function addBaseResources(nova:NovaNotePlugin){
 }
 
 export function loadResources(nova:NovaNotePlugin){
-    return ()=>{
-        for(const file of nova.app.vault.getMarkdownFiles()) loadFile(nova,file);
-        console.info(`Loaded ${count} Resources`);
-    }
+    addBaseResources(nova);
+    for(const file of nova.app.vault.getMarkdownFiles()) loadFile(nova,file);
+    console.info(`Loaded ${count} Resources`);
 }
 export function loadFile(nova:NovaNotePlugin,file:TFile){
     const meta = nova.app.metadataCache.getFileCache(file);
@@ -179,7 +178,7 @@ export function getTypes(data:FileData):{ [key:string]:TypeData }{
 export const createResourceOnFile = (nova:NovaNotePlugin,file:TFile|null)=>{
     //
 }
-export const addResourceToFile = (nova:NovaNotePlugin,file?:TFile|null)=>{
+export const createResourceItem = (nova:NovaNotePlugin,file?:TFile|null)=>{
     if(file==null) file = nova.app.workspace.getActiveFile();
     const resourceList = new ResourceListModal(nova.app,(resource)=>{
         const resourceForm = new ResourceEditableModal(nova,resource,file as TFile);

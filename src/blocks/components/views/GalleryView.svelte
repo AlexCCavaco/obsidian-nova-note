@@ -39,8 +39,7 @@
 <style>
     .nova-gallery {
         display: grid;
-        grid-template-areas: "a a a";
-        grid-auto-columns: minmax(200px, 400px);
+        grid-template-columns: repeat(auto-fill, minmax(min(10rem, 100%), 1fr));
         align-items: center;
         gap: 15px;
         margin: 15px 0;

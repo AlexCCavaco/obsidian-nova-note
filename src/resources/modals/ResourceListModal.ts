@@ -17,7 +17,7 @@ export default class extends SuggestModal<Resource> {
     
     renderSuggestion(value: Resource, el: HTMLElement) {
         el.createEl("div", { text: value.name });
-        el.createEl("small", { text: value.file?.path });
+        el.createEl("small", { text: (value.file ? value.file.path : 'native') });
     }
 
     onChooseSuggestion(item: Resource, evt: MouseEvent | KeyboardEvent) {

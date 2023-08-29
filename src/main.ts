@@ -1,6 +1,6 @@
 import { addIcon, Editor, MarkdownView, Plugin, TFile, TFolder } from 'obsidian';
 import { SettingsTab, DefaultSettings, type Settings } from "./SettingsTab";
-import { addBaseResources, addResourceToFile, createResourceOnFile, fileChanged, fileDeleted, loadFile } from './resources';
+import { createResourceItem, createResourceOnFile, fileChanged, fileDeleted, loadFile, loadResources } from './resources';
 import { codeBlockProcessor } from './blocks';
 import { openFileFromEvent } from './handlers/leafHandler';
 import { init as dataLoaderInit } from "./data/DataLoader";
@@ -53,7 +53,7 @@ export default class NovaNotePlugin extends Plugin {
 		if(this.settings.enableResources){
 			dataLoaderInit(this);
 			conditionalDataInit(this);
-			addBaseResources(this);
+			loadResources(this);
 
 			this.app.metadataCache.on('resolve',(file)=>loadFile(this,file));
 			this.app.metadataCache.on('changed',(file,data,cache)=>fileChanged(this,file,data,cache));
@@ -66,9 +66,9 @@ export default class NovaNotePlugin extends Plugin {
 				editorCallback:(editor:Editor,ctx:MarkdownView)=>createResourceOnFile(this,ctx.file),
 			});
 			this.addCommand({
-				id: "add-nova-resource-to-file",
-				name: "Add a Nova Resource to File",
-				editorCallback:(editor:Editor,ctx:MarkdownView)=>addResourceToFile(this,ctx.file),
+				id: "create-nova-resource-item",
+				name: "Create Resource Item",
+				editorCallback:(editor:Editor,ctx:MarkdownView)=>createResourceItem(this,ctx.file),
 			});
 		}
 

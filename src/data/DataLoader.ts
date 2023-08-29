@@ -41,7 +41,10 @@ export async function loadFromResource(resource:Resource|string,on:OprType,thisD
         resourceVal = resource;
         resource = getResource(resourceVal);
     }
-    if(!resource) errorNoticeMessage(`Resource ${resourceVal} not found`);
+    if(!resource){
+        errorNoticeMessage(`Resource ${resourceVal} not found`);
+        return [];
+    }
     return forEachFile(nova,async (fileData,curData)=>{
         const meta = fileData.getMetadata();
         if(!(meta && meta.frontmatter && meta.frontmatter['nova-use'])) return false;
