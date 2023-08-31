@@ -1,10 +1,11 @@
 import { isObjValType, isOfValType, type OPERATION_TYPE, type OprType, type ValType } from "src/parser";
 import type { BlockDataVal } from "../blocks/NovaBlock";
-import { getIdOrGenerate } from "./IdHandler";
+import { getIdOrGenerate } from "../handlers/IdHandler";
 import { isAsync } from "../handlers/tools";
 import FileData from "src/data/FileData";
 import FileDataElm from "src/data/FileDataElm";
 import type NovaNotePlugin from "src/main";
+import path from "path";
 
 let nova:NovaNotePlugin;
 
@@ -123,24 +124,12 @@ function valSet(value:unknown):ValType{
 
 async function processDataLocation(props:string[],blockData:FileDataElm,curData:FileData,thisData?:{[key:string]:unknown}){
     switch(props[0]){
-        case '$file':
-            splice();
-            return blockData.file;
-        case '$cur':
-            splice();
-            return curData.file;
-        case '$cmeta':
-            splice();
-            return assertFrontmatter(curData);
-        case '$meta':
-            splice();
-            return assertFrontmatter(blockData);
-        case '$':
-            splice();
-            return thisData??{};
-        case '$this':
-            splice();
-            return await getIdOrGenerate(nova,curData);
+        case '$file': splice(); return blockData.file;
+        case '$cur': splice(); return curData.file;
+        case '$cmeta': splice(); return assertFrontmatter(curData);
+        case '$meta': splice(); return assertFrontmatter(blockData);
+        case '$': splice(); return thisData??{};
+        case '$this': splice(); return await getIdOrGenerate(nova,curData);
     }
     if(props[0][0]!=='$') return blockData.data;
     return {
@@ -149,16 +138,19 @@ async function processDataLocation(props:string[],blockData:FileDataElm,curData:
         '$some':   async (arr:ValType,on:OprType)=>formArray(arr).some(async (val:any)=>await processConditions(blockData,curData,on,val)),
         '$every':  async (arr:ValType,on:OprType)=>formArray(arr).every(async (val:any)=>await processConditions(blockData,curData,on,val)),
         '$if':     async (val:OprType,res:OprType,els?:OprType)=>((await processOPR(blockData,curData,val))?(await processOPR(blockData,curData,res)):(els?await processOPR(blockData,curData,els):null)),
-        '$path':   async (val:OprType)=>(blockData.file.parent.path + '/' + await processOPR(blockData,curData,val)),
+        '$path':   async (...paths:OprType[])=>path.join(blockData.file.parent.path,...(await handlePaths(blockData,curData,paths))),
     }
 
     function splice(){ props.splice(0,1); }
 }
 
+async function handlePaths(blockData:FileDataElm,curData:FileData,paths:OprType[]):Promise<string[]>{
+    return Promise.all(paths.map(async path=>((await processOPR(blockData,curData,path)??'').toString())));
+}
+
 export function formData(fileData:FileData,data:{[key:string]:unknown}):FileDataElm{
     return FileDataElm.fromFileData(fileData,data);
 }
-
 
 export function assertFrontmatter(fileData:FileData){
     return (fileData.meta ? fileData.meta.frontmatter??{} : {});

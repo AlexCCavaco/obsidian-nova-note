@@ -1,10 +1,10 @@
 import { addIcon, Editor, MarkdownView, Plugin, TFile, TFolder } from 'obsidian';
 import { SettingsTab, DefaultSettings, type Settings } from "./SettingsTab";
-import { createResourceItem, createResourceOnFile, fileChanged, fileDeleted, loadFile, loadResources } from './resources';
+import { createResourceItem, createResourceOnFile, fileChanged, fileDeleted, loadFile, openFileFromEvent } from './handlers/FileHandler';
 import { codeBlockProcessor } from './blocks';
-import { openFileFromEvent } from './handlers/leafHandler';
 import { init as dataLoaderInit } from "./data/DataLoader";
 import { init as conditionalDataInit } from "./data/ConditionalData";
+import { loadResources } from './handlers/ResourceHandler';
 
 export const icon = 'nova';
 

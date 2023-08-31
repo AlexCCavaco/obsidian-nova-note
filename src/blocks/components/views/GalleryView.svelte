@@ -3,7 +3,7 @@
 	import type { ViewData, ViewDataElm } from "src/blocks/NovaView";
 	import type NovaView from "src/blocks/NovaView";
 	import { makeIcon, makeImage } from "src/blocks/interface";
-	import { openFileFromEvent } from "src/handlers/leafHandler";
+	import { openFileFromEvent } from "../../../handlers/FileHandler";
 	import { writable, type Writable } from "svelte/store";
 
     type GalleryOpts = {

@@ -5,7 +5,7 @@ import ResourceColString from "./ResourceColString";
 export default class extends Resource {
 
     constructor(nova:NovaNotePlugin){
-        super(nova,'task', undefined, {
+        super(nova,'task', null, {
             'status': new ResourceColString('status',"Status",'text',{ input:true,multi:false,required:false }),
             'title': new ResourceColString('title',"Title",'text',{ input:true,multi:false,required:true }),
             'start': new ResourceColString('start',"Start",'date',{ input:true,multi:false,required:false }),

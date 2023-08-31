@@ -108,4 +108,4 @@ export const COMPARATIVE    = lazy(():Parser<OprType>=>seqMap(EQUALITY,        s
 export const LOGICAL        = lazy(():Parser<OprType>=>seqMap(COMPARATIVE,     seq(LOGIC, COMPARATIVE).many(),             mapExpressions));
 export const TERNARY        = lazy(():Parser<OprType>=>seqMap(LOGICAL,         seq(INTERROG.then(EXPRESSION), COLON.then(EXPRESSION)).many(),mapTernary));
 
-export const parseExpression = EXPRESSION.tryParse;
+export const parseExpression = (data:string)=>EXPRESSION.tryParse(data);

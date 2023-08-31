@@ -3,8 +3,8 @@ import FileDataElm from "./FileDataElm";
 import FileData from "./FileData";
 import type { OprType } from "src/parser";
 import type Resource from "src/resources/Resource";
-import { errorNoticeMessage } from "src/handlers/noticeHandler";
-import { getResource } from "src/resources";
+import { errorNoticeMessage } from "src/handlers/NoticeHandler";
+import { getResource } from "src/handlers/ResourceHandler";
 import { assertFrontmatter, formData, processConditions } from "src/data/ConditionalData";
 import type { BlockDataVal } from "src/blocks/NovaBlock";
 

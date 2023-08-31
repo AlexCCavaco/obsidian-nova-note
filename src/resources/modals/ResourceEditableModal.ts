@@ -4,13 +4,14 @@ import ResourceInstancesModal, { isInstanceResourceCreator } from "./ResourceIns
 import type NovaNotePlugin from "src/main";
 import DataValue from "./components/DataValue.svelte";
 import TypeInstancesModal from "./TypeInstancesModal";
-import { getIdOrGenerate } from "src/data/IdHandler";
+import { getIdOrGenerate } from "src/handlers/IdHandler";
 import ResourceColResource from "../ResourceColResource";
 import ResourceColDefType from "../ResourceColDefType";
 import ResourceColString from "../ResourceColString";
 import type ResourceCol from "../ResourceCol";
-import FileDataElm, { FileDataElmFromFileData } from "src/data/FileDataElm";
+import FileDataElm from "src/data/FileDataElm";
 import FileData from "src/data/FileData";
+import ResourceItem from "../ResourceItem";
 
 export default class ResouceEditableModal extends Modal {
 
@@ -34,8 +35,8 @@ export default class ResouceEditableModal extends Modal {
     onOpen(): void {
         const contentEl = this.contentEl;
         contentEl.createEl("h1", { text: `Resource ${this.resource.name}` });
-        for(const key in this.resource.cols){
-            const col = this.resource.cols[key];
+        for(const key in this.resource.getCols()){
+            const col = this.resource.getCols()[key];
             if(!col.input) continue;
             if(col instanceof ResourceColResource) this.addResourceInput(key,col);
             else if(col instanceof ResourceColDefType) this.addTypeInput(key,col);
@@ -50,18 +51,10 @@ export default class ResouceEditableModal extends Modal {
     }
 
     async save(){
-        if(!this.file){
-            const curBlock = new FileData(this.nova,this.parent);
-            const block = !this.resource.file ? FileDataElmFromFileData(curBlock,{}) : new FileDataElm(this.nova,this.resource.file,this.data);
-            const path = await this.resource.genPath(block,curBlock);
-            const name = await this.resource.genFileName(block,curBlock);
-            this.file = await this.nova.app.vault.create(path + '/' + name + '.md','');
-        }
-        this.nova.app.fileManager.processFrontMatter(this.file,(fm)=>{
-            for(const key in this.data) fm[key] = this.data[key];
-        });
-        const block = new FileDataElm(this.nova, this.file,this.data);
-        if(this.cb) this.cb(block);
+        const curBlock = new FileData(this.nova,this.parent);
+        const item = await ResourceItem.create(this.nova,this.resource,curBlock,this.data);
+        
+        if(this.cb) this.cb(item);
         this.close();
     }
 

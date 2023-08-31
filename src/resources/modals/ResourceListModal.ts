@@ -1,5 +1,5 @@
 import { App, SuggestModal } from "obsidian";
-import { getResources } from "..";
+import { getResources } from "../../handlers/ResourceHandler.js";
 import type Resource from "../Resource";
 
 export default class extends SuggestModal<Resource> {
@@ -11,8 +11,13 @@ export default class extends SuggestModal<Resource> {
         this.cb = cb;
     }
 
-    getSuggestions(query: string): Resource[] | Promise<Resource[]> {
-        return Object.values(getResources()).filter(res=>(res.name).toLowerCase().includes(query.toLowerCase()))
+    getSuggestions(query: string):Resource[]|Promise<Resource[]>{
+        return Object.values(getResources()).filter(res=>(
+            !res.isHidden() && (
+                !query || query==='' ||
+                (res.name).toLowerCase().includes(query.toLowerCase())
+            )
+        ));
     }
     
     renderSuggestion(value: Resource, el: HTMLElement) {

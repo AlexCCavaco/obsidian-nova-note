@@ -12,11 +12,13 @@ import FileData from "src/data/FileData";
 import type FileDataElm from "src/data/FileDataElm";
 import { processOPR } from "src/data/ConditionalData";
 import { loadFromResource } from "src/data/DataLoader";
+import { getResource, handleResourceCols } from "../handlers/ResourceHandler";
 
 export type ResourceOpts = {
     extend     ?: string,
     html       ?: string,
     inline     ?: boolean,
+    hidden     ?: boolean,
     filename   ?: OprType,
     location   ?: OprType,
     template   ?: string,
@@ -24,52 +26,93 @@ export type ResourceOpts = {
 
 export default class Resource {
 
-    nova        : NovaNotePlugin;
-    name        : string;
-    cols        : {[key:string]:ResourceCol};
-    file       ?: TFile;
-    
-    extend      : string | null;
-    html        : string | null;
-    inline      : boolean;
-    filename    : OprType | null;
-    location    : OprType | null;
-    template    : string | null;
+    nova    : NovaNotePlugin;
+    name    : string;
+    cols    : {[key:string]:ResourceCol};
+    file    : TFile|null;
 
-    items       : ResourceItem[];
+    private extend      : Resource|null;
+    private html        : string|null;
+    private inline      : boolean;
+    private hidden      : boolean;
+    private filename    : OprType|null;
+    private location    : OprType|null;
+    private template    : string|null;
 
-    constructor(nova:NovaNotePlugin,name:string,file?:TFile,cols?:Resource['cols'],opts?:ResourceOpts,extendsResource?:Resource){
+    private items       : ResourceItem[];
+    private propGen     : boolean;
+    private properties  : {[key:string]:unknown};
+
+    constructor(nova:NovaNotePlugin,name:string,file?:TFile|null,properties?:Resource['properties']){
         this.nova = nova;
         this.name = name;
-        this.cols = cols ?? {};
-        this.file = file;
+        this.file = file??null;
         this.items = [];
-        if(extendsResource) opts = Object.assign({},extendsResource.getOpts(),opts);
-        if(opts) this.updateOpts(opts);
+        this.propGen = false;
+        this.properties = properties??{};
     }
 
-    getOpts():ResourceOpts{
-        const opts:ResourceOpts = {};
-        if(this.extend!=null) opts.extend = this.extend;
-        if(this.html!=null) opts.html = this.html;
-        if(this.filename!=null) opts.filename = this.filename;
-        if(this.location!=null) opts.location = this.location;
-        if(this.template!=null) opts.template = this.template;
-        if(this.inline!=null) opts.inline = this.inline;
-        return opts;
+    private setupProperties(){
+        this.propGen = true;
+        if(this.properties.$extend){
+            this.extend = getResource(this.properties.$extend.toString());
+            delete this.properties.$extend;
+            if(this.extend) this.properties = Object.assign({}, this.extend.properties, this.properties);
+        }
+        const { cols,opts } = handleResourceCols(this.file??undefined,this.properties);
+        this.cols = cols;
+        this.updateOpts(opts);
     }
 
-    updateOpts(opts:ResourceOpts){
-        this.extend     = opts.extend   ?? null;
+    getCols():{[key:string]:ResourceCol}{
+        if(!this.propGen) this.setupProperties();
+        return this.cols;
+    }
+
+    updateProperties(properties:Resource['properties']){
+        this.properties = properties;
+        this.propGen = false;
+    }
+
+    private updateOpts(opts:ResourceOpts){
         this.html       = opts.html     ?? null;
         this.filename   = opts.filename ?? null;
         this.location   = opts.location ?? null;
         this.template   = opts.template ?? null;
         this.inline     = opts.inline ? !!opts.inline : false;
+        this.hidden     = opts.hidden ? !!opts.hidden : false;
     }
 
-    async genPath(data:FileDataElm,curData:FileData){ return this.location ? await processOPR(data,curData,this.location) : curData.file.parent.path; }
-    async genFileName(data:FileDataElm,curData:FileData){ return this.filename ? await processOPR(data,curData,this.filename) : this.name; }
+    async getPath(data:FileDataElm,curData:FileData){
+        if(!this.propGen) this.setupProperties();
+        return this.location ? await processOPR(data,curData,this.location) : curData.file.parent.path;
+    }
+    async getFileName(data:FileDataElm,curData:FileData){
+        if(!this.propGen) this.setupProperties();
+        return this.filename ? await processOPR(data,curData,this.filename) : this.name;
+    }
+
+    getExtends(){
+        if(!this.propGen) this.setupProperties();
+        return this.extend;
+    }
+    getHTML(){
+        if(!this.propGen) this.setupProperties();
+        return this.html;
+    }
+    getTemplate(){
+        if(!this.propGen) this.setupProperties();
+        return this.template;
+    }
+
+    isInline(){
+        if(!this.propGen) this.setupProperties();
+        return this.inline;
+    }
+    isHidden(){
+        if(!this.propGen) this.setupProperties();
+        return this.hidden;
+    }
 
     update(cols:Resource['cols']) {
         this.cols = cols;
