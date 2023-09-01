@@ -2,7 +2,6 @@ import { parseImageString, type ParsedImageString } from "./parser";
 import { setIcon } from "obsidian";
 import type FileData from "src/data/FileData";
 import type FileDataElm from "src/data/FileDataElm";
-import { processOPR } from "src/data/ConditionalData";
 
 export async function makeIcon(iconStr:string, data:FileDataElm, fileData:FileData){
     iconStr = iconStr.trim();
@@ -33,7 +32,7 @@ export async function makeImage(name:string,imageStr:string, data:FileDataElm, f
 async function makeIconImage(elm:HTMLElement,res:ParsedImageString,data:FileDataElm,fileData:FileData){
     setIcon(elm,res.icon);
     for(const prop of res.props){
-        const value = await processOPR(data,fileData,prop.value,data.meta?.frontmatter);
+        const value = await data.nova.data.processOPR(data,fileData,prop.value,data.meta?.frontmatter);
         switch(prop.key){
             case 'color': if(value!=null) elm.style.color = value.toString(); break;
         }

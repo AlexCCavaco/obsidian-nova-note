@@ -3,9 +3,9 @@ import NovaCol from "./NovaCol";
 import type { BLOCK_TYPE } from "./definitions";
 import { type MarkdownPostProcessorContext } from "obsidian";
 import parse from "./parser";
-import type NovaNotePlugin from "src/main";
+import type Nova from "src/Nova";
 
-export function handleBlockData(nova:NovaNotePlugin,parentElm:HTMLElement,data:BLOCK_TYPE[]){
+export function handleBlockData(nova:Nova,parentElm:HTMLElement,data:BLOCK_TYPE[]){
     const cols:NovaCol[] = [];
     for(const bData of data){
         switch(bData.block){

@@ -1,10 +1,10 @@
-import type NovaNotePlugin from "src/main";
+import type Nova from "src/Nova";
 import Resource from "./Resource";
 import ResourceColString from "./ResourceColString";
 
 export default class extends Resource {
 
-    constructor(nova:NovaNotePlugin){
+    constructor(nova:Nova){
         super(nova,'task', null, {
             'status': new ResourceColString('status',"Status",'text',{ input:true,multi:false,required:false }),
             'title': new ResourceColString('title',"Title",'text',{ input:true,multi:false,required:true }),

@@ -3,7 +3,6 @@
 	import type { ViewData, ViewDataElm } from "src/blocks/NovaView";
 	import type NovaView from "src/blocks/NovaView";
 	import { makeIcon, makeImage } from "src/blocks/interface";
-	import { openFileFromEvent } from "../../../handlers/FileHandler";
 	import { writable, type Writable } from "svelte/store";
 
     type GalleryOpts = {
@@ -15,7 +14,7 @@
 
     export let view:NovaView;
 
-    const openElm = (elm:ViewDataElm<GalleryOpts>)=>(ev:MouseEvent)=>{ if(ev.button>1) return; ev.preventDefault(); openFileFromEvent(view.block.nova,ev,elm.block.file) };
+    const openElm = (elm:ViewDataElm<GalleryOpts>)=>(ev:MouseEvent)=>{ if(ev.button>1) return; ev.preventDefault(); view.block.nova.files.openFileFromEvent(view.block.nova,ev,elm.block.file) };
 
     const data:Writable<ViewData<GalleryOpts>> = writable([]);
     view.data.subscribe(nData=>{ data.set(nData.map((iData)=>({ ...iData,opts:{...defaultOpts,...iData.opts} }))); });

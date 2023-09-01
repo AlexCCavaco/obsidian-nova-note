@@ -1,6 +1,6 @@
 import type { CachedMetadata, TFile } from "obsidian";
 import { parseType } from "./parser";
-import type NovaNotePlugin from "src/main";
+import type Nova from "src/Nova";
 import { type OprType } from "src/parser";
 import type { ResourceColDefTypeType } from "./ResourceColDefType";
 import type ResourceCol from "./ResourceCol";
@@ -10,9 +10,6 @@ import ResourceColDefType from "./ResourceColDefType";
 import ResourceItem, { ResourceItemFromFileData } from "./ResourceItem";
 import FileData from "src/data/FileData";
 import type FileDataElm from "src/data/FileDataElm";
-import { processOPR } from "src/data/ConditionalData";
-import { loadFromResource } from "src/data/DataLoader";
-import { getResource, handleResourceCols } from "../handlers/ResourceHandler";
 
 export type ResourceOpts = {
     extend     ?: string,
@@ -26,10 +23,10 @@ export type ResourceOpts = {
 
 export default class Resource {
 
-    nova    : NovaNotePlugin;
+    nova    : Nova;
     name    : string;
     cols    : {[key:string]:ResourceCol};
-    file    : TFile|null;
+    fileData: FileData|null;
 
     private extend      : Resource|null;
     private html        : string|null;
@@ -43,10 +40,10 @@ export default class Resource {
     private propGen     : boolean;
     private properties  : {[key:string]:unknown};
 
-    constructor(nova:NovaNotePlugin,name:string,file?:TFile|null,properties?:Resource['properties']){
+    constructor(nova:Nova,name:string,file?:FileData|null,properties?:Resource['properties']){
         this.nova = nova;
         this.name = name;
-        this.file = file??null;
+        this.fileData = file??null;
         this.items = [];
         this.propGen = false;
         this.properties = properties??{};
@@ -55,11 +52,11 @@ export default class Resource {
     private setupProperties(){
         this.propGen = true;
         if(this.properties.$extend){
-            this.extend = getResource(this.properties.$extend.toString());
+            this.extend = this.nova.resources.getResource(this.properties.$extend.toString());
             delete this.properties.$extend;
             if(this.extend) this.properties = Object.assign({}, this.extend.properties, this.properties);
         }
-        const { cols,opts } = handleResourceCols(this.file??undefined,this.properties);
+        const { cols,opts } = this.nova.resources.handleResourceCols(this.fileData??undefined,this.properties);
         this.cols = cols;
         this.updateOpts(opts);
     }
@@ -85,11 +82,11 @@ export default class Resource {
 
     async getPath(data:FileDataElm,curData:FileData){
         if(!this.propGen) this.setupProperties();
-        return this.location ? await processOPR(data,curData,this.location) : curData.file.parent.path;
+        return this.location ? await this.nova.data.processOPR(data,curData,this.location) : curData.file.parent.path;
     }
     async getFileName(data:FileDataElm,curData:FileData){
         if(!this.propGen) this.setupProperties();
-        return this.filename ? await processOPR(data,curData,this.filename) : this.name;
+        return this.filename ? await this.nova.data.processOPR(data,curData,this.filename) : this.name;
     }
 
     getExtends(){
@@ -118,7 +115,7 @@ export default class Resource {
         this.cols = cols;
     }
 
-    assert(nova:NovaNotePlugin,data:FileDataElm,curData:FileData):FileDataElm{
+    assert(nova:Nova,data:FileDataElm,curData:FileData):FileDataElm{
         const bData = data.data;
         const nData:FileDataElm['data'] = {};
         for(const key in this.cols){
@@ -129,9 +126,9 @@ export default class Resource {
             } else if(col.input){
                 nData[key] = bData[key]??def;
             } else if(col instanceof ResourceColResource){
-                nData[key] = { lazy:true,get:async ()=>(nData[key]=col.resource?await loadFromResource(col.resource,col.on,nData):def) };
+                nData[key] = { lazy:true,get:async ()=>(nData[key]=col.resource?await this.nova.loader.loadFromResource(col.resource,col.on,nData):def) };
             } else if(col instanceof ResourceColValue){
-                nData[key] = { lazy:true,get:async ()=>(nData[key]=await processOPR(data,curData,col.value)??def) };
+                nData[key] = { lazy:true,get:async ()=>(nData[key]=await this.nova.data.processOPR(data,curData,col.value)??def) };
             }
         }
         return Object.assign({},data,{ data:nData });

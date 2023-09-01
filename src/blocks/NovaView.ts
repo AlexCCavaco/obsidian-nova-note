@@ -5,7 +5,6 @@ import type NovaBlock from "./NovaBlock";
 import { writable, type Writable } from "svelte/store";
 import type FileData from "src/data/FileData";
 import type FileDataElm from "src/data/FileDataElm";
-import { processConditions, processOPR } from "src/data/ConditionalData";
 
 export type BaseOptsType = { [key:string]:unknown };
 export type BaseDataType = { [key:string]:{ value:unknown,label:string } };
@@ -69,14 +68,14 @@ export default class {
         const nData:ViewData = [];
         let index = 0;
         for(const data of blockData){
-            if(!await processConditions(data,this.file,this.where)) continue;
+            if(!await this.block.nova.data.processConditions(data,this.file,this.where)) continue;
             const elm:ViewDataElm = { data:{},opts:{},block:data,link:data.file.path };
             for(const show of this.shows){
                 const name = show.key!=null && isOfValType(show.key) ?
                     (isObjValType(show.key) ? show.key.value.toString() : show.key.toString()) : `col:${++index}`;
-                elm.data[name] = { value:await processOPR(data,this.file,show.key),label:show.label??name };
+                elm.data[name] = { value:await this.block.nova.data.processOPR(data,this.file,show.key),label:show.label??name };
             }
-            for(const altr of this.alter) elm.opts[altr.lhs] = await processOPR(data,this.file,altr.rhs);
+            for(const altr of this.alter) elm.opts[altr.lhs] = await this.block.nova.data.processOPR(data,this.file,altr.rhs);
             nData.push(elm);
         }
         this.data.set(nData);

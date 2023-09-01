@@ -1,26 +1,24 @@
 import type { TFile } from "obsidian";
 import type Resource from "./Resource";
-import type NovaNotePlugin from "src/main";
 import FileDataElm from "src/data/FileDataElm";
 import ResourceColResource from "./ResourceColResource";
 import ResourceColDefType from "./ResourceColDefType";
 import ResourceColValue from "./ResourceColValue";
 import type ResourceColString from "./ResourceColString";
-import { generateId, getId, getIdOrGenerate } from "src/handlers/IdHandler";
 import FileData from "src/data/FileData";
-import { processOPR } from "src/data/ConditionalData";
+import type Nova from "src/Nova";
 
 export default class ResourceItem extends FileDataElm {
 
     resource    : Resource;
 
-    constructor(nova:NovaNotePlugin,resource:Resource,file:TFile,data?:FileDataElm['data']){
+    constructor(nova:Nova,resource:Resource,file:TFile,data?:FileDataElm['data']){
         super(nova,file);
         this.resource = resource;
         if(data) this.setData(ResourceItem.assertData(nova,resource,this,data??{}));
     }
 
-    static async create(nova:NovaNotePlugin,resource:Resource,fileData:FileData,data:FileDataElm['data']){
+    static async create(nova:Nova,resource:Resource,fileData:FileData,data:FileDataElm['data']){
         const fileDataElm = FileDataElm.fromFileData(fileData,data);
         data = ResourceItem.assertData(nova,resource,fileDataElm,data);
         const name = resource.getFileName(fileDataElm,fileData);
@@ -37,7 +35,7 @@ export default class ResourceItem extends FileDataElm {
         });
     }
 
-    static assertData(nova:NovaNotePlugin,resource:Resource,fileDataElm:FileDataElm,data:FileDataElm['data']){
+    static assertData(nova:Nova,resource:Resource,fileDataElm:FileDataElm,data:FileDataElm['data']){
         const keys = Object.keys(resource.getCols());
         const res:FileDataElm['data'] = {};
         for(const key of keys){
@@ -48,12 +46,12 @@ export default class ResourceItem extends FileDataElm {
         }
         return res;
     }
-    static assertValue(nova:NovaNotePlugin,resource:Resource,fileDataElm:FileDataElm,key:string,value:any){
+    static assertValue(nova:Nova,resource:Resource,fileDataElm:FileDataElm,key:string,value:any){
         if(!resource.getCols()[key]) return undefined;
         const col = resource.getCols()[key];
         if(col instanceof ResourceColResource) return col.resource.getItem(value.toString());
         if(col instanceof ResourceColDefType) return col.type.get(value.toString());
-        if(col instanceof ResourceColValue) return processOPR(fileDataElm,FileData.getCurrent(nova),col.value,value);
+        if(col instanceof ResourceColValue) return nova.data.processOPR(fileDataElm,FileData.getCurrent(nova),col.value,value);
         switch((col as ResourceColString).type){
             case "number":   return parseFloat(value);
             case "text":     return value.toString();
@@ -83,7 +81,7 @@ export default class ResourceItem extends FileDataElm {
         const col = resource.getCols()[key];
         if(col instanceof ResourceColResource) return col.resource.getItem(value.toString());
         if(col instanceof ResourceColDefType) return col.type.get(value.toString());
-        if(col instanceof ResourceColValue) return processOPR(this,FileData.getCurrent(this.nova),col.value,value);
+        if(col instanceof ResourceColValue) return this.nova.data.processOPR(this,FileData.getCurrent(this.nova),col.value,value);
         switch((col as ResourceColString).type){
             case "number":   return parseFloat(value);
             case "text":     return value.toString();
@@ -107,15 +105,15 @@ export default class ResourceItem extends FileDataElm {
     }
 
     getId(){
-        return getId(this.nova,new FileData(this.nova,this.file));
+        return this.nova.files.getId(new FileData(this.nova,this.file));
     }
     
     async getIdOrGenerate(){
-        return await getIdOrGenerate(this.nova,new FileData(this.nova,this.file));
+        return await this.nova.files.getIdOrGenerate(new FileData(this.nova,this.file));
     }
     
     async generateId(){
-        return await generateId(this.nova,this.file);
+        return await this.nova.files.generateId(new FileData(this.nova,this.file));
     }
 
 }

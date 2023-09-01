@@ -1,19 +1,19 @@
 import { TFile, type CachedMetadata } from "obsidian";
-import type NovaNotePlugin from "src/main";
+import type Nova from "src/Nova";
 
 export default class FileData {
 
-    nova: NovaNotePlugin;
+    nova: Nova;
     file: TFile;
     meta: CachedMetadata|null;
 
-    constructor(nova:NovaNotePlugin,file:TFile,meta?:CachedMetadata){
+    constructor(nova:Nova,file:TFile,meta?:CachedMetadata){
         this.nova = nova;
         this.file = file;
         this.meta = meta ?? null;
     }
 
-    static getCurrent(nova:NovaNotePlugin){
+    static getCurrent(nova:Nova){
         const curFile = nova.app.workspace.getActiveFile();
         if(!curFile) throw new Error(`No Opened File Found`);
         return new this(nova,curFile);

@@ -3,10 +3,9 @@ import Block from "./components/Block.svelte";
 import type { OprType } from "src/parser";
 import NovaView from "./NovaView";
 import { writable, type Writable } from "svelte/store";
-import type NovaNotePlugin from "src/main";
-import { loadFromAll, loadFromLocal, loadFromPath, loadFromResource, loadFromTag } from "../data/DataLoader";
 import FileData from "src/data/FileData";
 import type FileDataElm from "src/data/FileDataElm";
+import type Nova from "src/Nova";
 
 export type BlockDataVal = {[key:string]:unknown|{lazy:true,get:()=>unknown}};
 
@@ -16,7 +15,7 @@ export default class {
     head: HTMLElement;
     body: HTMLElement;
     component:  Block;
-    nova: NovaNotePlugin;
+    nova: Nova;
 
     type:   DISPLAY_TYPE;
     from:   FROM_TYPE;
@@ -26,7 +25,7 @@ export default class {
     data:   Writable<FileDataElm[]>;
     file:   FileData;
 
-    constructor(nova:NovaNotePlugin){
+    constructor(nova:Nova){
         this.elm = document.createElement('div');
         this.elm.classList.add('nova-block');
         this.nova = nova;
@@ -79,13 +78,13 @@ export default class {
 
 }
 
-async function loadData(nova:NovaNotePlugin,from:FROM_TYPE,on:OprType):Promise<FileDataElm[]>{
+async function loadData(nova:Nova,from:FROM_TYPE,on:OprType):Promise<FileDataElm[]>{
     switch(from.type){
-        case "tag":      return await loadFromTag(from.value,on);
-        case "resource": return await loadFromResource(from.value,on);
-        case "all":      return await loadFromAll(on);
-        case "local":    return await loadFromLocal(from.value,on);
-        case "path":     return await loadFromPath(from.value,on);
+        case "tag":      return await nova.loader.loadFromTag(from.value,on);
+        case "resource": return await nova.loader.loadFromResource(from.value,on);
+        case "all":      return await nova.loader.loadFromAll(on);
+        case "local":    return await nova.loader.loadFromLocal(from.value,on);
+        case "path":     return await nova.loader.loadFromPath(from.value,on);
     }
     return [];
 }

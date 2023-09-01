@@ -1,6 +1,6 @@
 import type { TFile } from "obsidian";
+import type Nova from "src/Nova";
 import FileData from "src/data/FileData";
-import type NovaNotePlugin from "src/main";
 
 export function FileDataElmFromFileData(fileData:FileData,data:FileDataElm['data']){
     return new this(fileData.nova,fileData.file,data);
@@ -10,7 +10,7 @@ export default class FileDataElm extends FileData {
 
     data        : {[key:string]:unknown};
 
-    constructor(nova:NovaNotePlugin,file:TFile,data?:FileDataElm['data']){
+    constructor(nova:Nova,file:TFile,data?:FileDataElm['data']){
         super(nova,file);
         this.setData(data??{});
     }
