@@ -18,7 +18,7 @@ export default class extends NovaModal {
         this.labelElm = form.createEl('p',{ text:"Input the Name of the New Resource" });
         /*/*/ this.labelElm.classList.add('res-form-toolheader');
         this.inputElm = this.createInput('text',form);
-        /*/*/ this.inputElm.classList.add('res-form-in');console.log(this.inputElm)
+        /*/*/ this.inputElm.classList.add('res-form-in');console.log(this.inputElm,this.inputElm.errorElement)
         this.buttonElm = form.createEl('button',{ text:'Submit' });
         /*/*/ this.buttonElm.classList.add('res-form-but');
         /*/*/ this.buttonElm.setAttribute('type','submit');
@@ -31,7 +31,7 @@ export default class extends NovaModal {
     }
 
     submit(ev:SubmitEvent){
-        ev.preventDefault();console.log(this.inputElm)
+        ev.preventDefault();
         const name = this.inputElm.value;
         if(name.trim()==='') return this.inputError(this.inputElm,"Name can't be Empty");
         if(this.nova.resources.hasResource(name)) return this.inputError(this.inputElm,`Resource ${name} already exists`);

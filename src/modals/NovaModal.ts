@@ -22,15 +22,16 @@ export default class extends Modal {
         input.setAttribute('type',type);
         input.errorElement = document.createElement('div');
         input.errorElement.classList.add('in-errs');
-        input.appendChild(input.errorElement);
+        if(input.parentElement) input.parentElement.insertAfter(input.errorElement,input);
         input.errors = [];
         input.addEventListener('input',()=>this.clearInputErrors(input));
         return input;
     }
 
     inputError(input:NovaModalInput,errorMessage:string){
-        const errElm = input.errorElement.createDiv(errorMessage);
+        const errElm = input.errorElement.createEl('div');
         errElm.classList.add('err-elm');
+        errElm.textContent = errorMessage;
     }
     clearInputErrors(input:NovaModalInput){
         input.errorElement.empty();

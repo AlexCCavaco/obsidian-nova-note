@@ -97,6 +97,7 @@ export default class extends NovaController {
 
     createResourceOnFile(file:TFile|null){
         const nameInputModal = new ResourceNameInput(this.nova,(resourceName:string)=>{
+            nameInputModal.close();
             const resEditorModal = new ResourceEditorModal(this.nova,resourceName,null,(resource:Resource)=>{
                 //
             });
