@@ -17,6 +17,14 @@ export default class extends Modal {
         this.cb = cb??undefined;
     }
 
+    setTitle(title:string){
+        this.titleEl.textContent = title;
+    }
+
+    setExtended(){
+        this.contentEl.parentElement?.classList.add('res-modal-extended');
+    }
+
     createInput(type:string,parent?:HTMLElement):NovaModalInput{
         const input = (parent ? parent.createEl('input') : document.createElement('input')) as NovaModalInput;
         input.setAttribute('type',type);

@@ -9,7 +9,6 @@ export default class extends NovaModal {
     resource   ?:Resource|null;
     name        :string;
 
-    nameElm     :HTMLElement;
     formElm     :HTMLElement;
     createElm   :HTMLElement;
     buttonElm   :HTMLElement;
@@ -17,15 +16,21 @@ export default class extends NovaModal {
     grid        :HTMLElement;
     head        :HTMLElement;
 
+    rowId       :number;
+    rows        :ResourceEditorRow[];
+
     constructor(nova:Nova,resourceName:string,resource?:Resource|null,cb?:(resource:Resource)=>void){
         super(nova,cb);
         this.name = resourceName;
         this.resource = resource;
+        this.rowId = 0;
+        this.rows = [];
+        this.setExtended();
     }
 
     onOpen(): void {
         const contentEl = this.contentEl;
-        this.nameElm = contentEl.createEl("h1", { text: `Resource ${this.name}` });
+        this.setTitle(`Resource ${this.name}`);
         this.formElm = contentEl.createEl("form", { text:'' });
 
         this.grid = this.formElm.createEl('div');
@@ -35,19 +40,21 @@ export default class extends NovaModal {
         /*/*/ this.head.createEl('div',{ text:'Name' });
         /*/*/ this.head.createEl('div',{ text:'Type' });
         /*/*/ this.head.createEl('div',{ text:'Value' });
-        /*/*/ this.head.createEl('div',{ text:'Required' });
+        /*/*/ this.head.createEl('div',{ text:'Multiple',cls:'header-center' });
+        /*/*/ this.head.createEl('div',{ text:'Required',cls:'header-center' });
+        /*/*/ this.head.createEl('div',{ text:'',cls:'header-center' });
         
         this.createElm = this.formElm.createEl('div',{ text:'Add Property' });
         /*/*/ this.createElm.classList.add('res-form-create');
         this.createElm.addEventListener('click',ev=>this.addRow());
 
-        this.addRow({
-            type: 'text',
-            input: true,
-            label: 'id',
-            multi: false,
-            required: true
-        },true);
+        //this.addRow({
+        //    type: 'text',
+        //    input: true,
+        //    label: 'id',
+        //    multi: false,
+        //    required: true
+        //},true);
 
         this.buttonElm = this.formElm.createEl('button',{ text:'Submit' });
         /*/*/ this.buttonElm.classList.add('res-form-but');

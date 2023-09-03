@@ -267,6 +267,10 @@
 
 /*/==> RESOURCE MODAL <==/*/
 
+.res-modal-extended {
+	width: 700px;
+}
+
 .res-form-toolheader {
 	padding: 0 15px;
     font-weight: bold;
@@ -313,42 +317,68 @@
 .res-grid-header,
 .res-grid-row {
 	display: grid;
-	grid-template-columns: 2fr 2fr 2fr 1fr;
+	grid-template-columns: 2fr 2fr 2fr 1fr 1fr 25px;
 	border-bottom: 1px solid var(--text-normal);
-	column-gap: 10px;
 }
 .res-grid-header {
-	padding: 5px 0;
+	padding: 7px 0;
 }
 .res-grid-row {
 	align-items: center;
 	justify-items: center;
 }
+.res-grid-row:nth-child(2n) {
+	background-color: var(--bg2);
+}
 .res-grid-header > * {
-	font-size: .95em;
+	font-size: .85em;
 	font-weight: bold;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	padding: 0 15px;
 }
-.res-grid-header > *:first-child,
-.res-grid-row > *:first-child {
-	padding-left: 15px;
-}
-.res-grid-header > *:last-child,
-.res-grid-row > *:last-child {
-	padding-right: 15px;
+.res-grid-header > .header-center {
+	text-align: center;
+	padding: 0;
 }
 
 .res-grid-row > * {
-	padding: 0;
+	width: 100%;
+	height: 40px;
 	--row-height: 40px;
+	padding: 0;
+	display: flex;
+	flex-direction: row;
+	align-content: center;
+	justify-content: center;
+	flex-wrap: wrap;
+}
+.res-grid-row > *:hover {
+	background-color: var(--bg3);
+}
+.res-grid-row > .col-close:hover {
+	color: var(--color-red);
+}
+.res-grid-row > .res-row-txt {
+	justify-content: start;
+	padding: 0 15px;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	font-size: .9em;
 }
 .res-grid-row > * > select,
 .res-grid-row > * > input[type="text"] {
 	width: 100%;
 	height: 100%;
 	height: var(--row-height);
+	padding: 0 15px;
 	box-sizing: border-box;
 	border-radius: 0;
 	background-color: transparent;
+	border: 1px solid var(--bg3);
+	box-shadow: none;
 }
 
 .res-form-create {

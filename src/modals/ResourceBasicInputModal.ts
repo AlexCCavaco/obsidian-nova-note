@@ -3,22 +3,24 @@ import NovaModal, { type NovaModalInput } from "./NovaModal";
 
 export default class extends NovaModal {
 
+    message     :string
     cb         ?:(data:string)=>void;
 
     labelElm    :HTMLParagraphElement;
     inputElm    :NovaModalInput;
     buttonElm   :HTMLButtonElement;
 
-    constructor(nova:Nova,cb?:(data:string)=>void){
+    constructor(nova:Nova,message:string,cb?:(data:string)=>void){
         super(nova,cb);
+        this.message = message;
     }
 
-    onOpen(): void {console.log('hello')
+    onOpen(): void {
         const form = this.contentEl.createEl('form');
-        this.labelElm = form.createEl('p',{ text:"Input the Name of the New Resource" });
+        this.labelElm = form.createEl('p',{ text:this.message });
         /*/*/ this.labelElm.classList.add('res-form-toolheader');
         this.inputElm = this.createInput('text',form);
-        /*/*/ this.inputElm.classList.add('res-form-in');console.log(this.inputElm,this.inputElm.errorElement)
+        /*/*/ this.inputElm.classList.add('res-form-in');
         this.buttonElm = form.createEl('button',{ text:'Submit' });
         /*/*/ this.buttonElm.classList.add('res-form-but');
         /*/*/ this.buttonElm.setAttribute('type','submit');

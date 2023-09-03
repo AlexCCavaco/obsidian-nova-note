@@ -81,8 +81,12 @@ export default class extends NovaController {
             const dataElm = data[colKey];
             if(dataElm==null) continue;
             if(colKey[0]!=='$'){
-                const col = this.parseCol(colKey,dataElm.toString(),file??undefined);
-                if(col) cols[colKey] = col;
+                try {
+                    const col = this.parseCol(colKey,dataElm.toString(),file??undefined);
+                    if(col) cols[colKey] = col;
+                } catch(err){
+                    ErrorNotice.error(err,`Column ${colKey} has Errors: `);
+                }
                 continue;
             }
             const key = colKey.substring(1) as keyof ResourceOpts;
@@ -118,12 +122,12 @@ export default class extends NovaController {
 
     private setResourceCol(name:string, label:string, resourceVal:string, on:OprType, opts:ResourceColResourceType){
         const resource = this.getResource(resourceVal);
-        if(!resource) throw new Error(`Resource ${resourceVal} doesn't exit`);
+        if(!resource) throw new Error(`Resource ${resourceVal} doesn't exist`);
         return new ResourceColResource(name, label, resource, on, opts);
     }
     private setResourceType(name:string, label:string, typeVal:string, opts:ResourceColDefTypeType, fileData:FileData){
         const typeData = this.nova.types.getType(fileData,typeVal);
-        if(!typeData) throw new Error(`Type ${typeVal} doesn't exit`);
+        if(!typeData) throw new Error(`Type ${typeVal} doesn't exist`);
         return new ResourceColDefType(name, label, typeData, opts);
     }
 

@@ -4,7 +4,7 @@ import { TFile, type CachedMetadata } from "obsidian";
 import ErrorNotice from "src/notices/ErrorNotice";
 import { nanoid } from "nanoid";
 import FileData from "src/data/FileData";
-import ResourceNameInput from "src/modals/ResourceNameInput";
+import ResourceBasicInputModal from "src/modals/ResourceBasicInputModal";
 import ResourceEditorModal from "src/modals/ResourceEditorModal";
 import type Resource from "src/resources/Resource";
 
@@ -96,7 +96,7 @@ export default class extends NovaController {
     /*/===/*/
 
     createResourceOnFile(file:TFile|null){
-        const nameInputModal = new ResourceNameInput(this.nova,(resourceName:string)=>{
+        const nameInputModal = new ResourceBasicInputModal(this.nova,'Input the Name of the New Resource',(resourceName:string)=>{
             nameInputModal.close();
             const resEditorModal = new ResourceEditorModal(this.nova,resourceName,null,(resource:Resource)=>{
                 //
