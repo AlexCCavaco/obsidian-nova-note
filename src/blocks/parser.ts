@@ -32,17 +32,17 @@ const viewHandler = seqMap(
         ),
         seqMap(
             key(/ALTER/i),
-            listed(seqMap(WORD,clearSpacedString('='),EXPRESSION,(lhs,_,rhs)=>({ lhs,rhs }))),
+            listed(seqMap(WORD,clearSpacedString('='),EXPRESSION,(lhs,_,rhs)=>({ lhs,rhs:rhs }))),
             (_,alter)=>({ clause:'alter',alter } as VIEW_CLAUSE_TYPE)
         ),
         seqMap(
             key(/SHOWS/i),
-            listed(seqMap(EXPRESSION,opt(regex(/AS/i).skip(whitespace).then(SWORD)),(key,label)=>({ key,label }))),
+            listed(seqMap(EXPRESSION,opt(regex(/AS/i).skip(whitespace).then(SWORD)),(key,label)=>({ key:key,label }))),
             (_,shows)=>({ clause:'shows',shows } as VIEW_CLAUSE_TYPE)
         ),
         seqMap(
             key(/WHERE/i), EXPRESSION,
-            (_,where)=>({ clause:'where',where } as VIEW_CLAUSE_TYPE)
+            (_,where)=>({ clause:'where',where:where } as VIEW_CLAUSE_TYPE)
         )
     ).many(),
     (type,id,label,clauses)=>({ clause:'view',type:type.toLowerCase(),id,label,clauses } as DISPLAY_CLAUSE_TYPE)

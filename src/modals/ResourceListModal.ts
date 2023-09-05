@@ -22,9 +22,9 @@ export default class extends SuggestModal<Resource> {
         ));
     }
     
-    renderSuggestion(resoure: Resource, el: HTMLElement) {
-        el.createEl("div", { text: resoure.name });
-        if(resoure.fileData) el.createEl("small", { text: (resoure.fileData.file ? resoure.fileData.file.path : 'native') });
+    renderSuggestion(resource: Resource, el: HTMLElement) {
+        el.createEl("div", { text: resource.name });
+        if(resource.fileData) el.createEl("small", { text: (resource.fileData.file ? resource.fileData.file.path : 'native') });
     }
 
     onChooseSuggestion(item: Resource, evt: MouseEvent | KeyboardEvent) {

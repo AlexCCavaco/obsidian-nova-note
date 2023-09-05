@@ -7,6 +7,7 @@ import ResourceColValue from "./ResourceColValue";
 import type ResourceColString from "./ResourceColString";
 import FileData from "src/data/FileData";
 import type Nova from "src/Nova";
+import Operation from "src/controllers/Operation";
 
 export default class ResourceItem extends FileDataElm {
 
@@ -51,7 +52,7 @@ export default class ResourceItem extends FileDataElm {
         const col = resource.getCols()[key];
         if(col instanceof ResourceColResource) return col.resource.getItem(value.toString());
         if(col instanceof ResourceColDefType) return col.type.get(value.toString());
-        if(col instanceof ResourceColValue) return nova.data.processOPR(fileDataElm,FileData.getCurrent(nova),col.value,value);
+        if(col instanceof ResourceColValue) return Operation.process(fileDataElm,FileData.getCurrent(nova),col.value,value);
         switch((col as ResourceColString).type){
             case "number":   return parseFloat(value);
             case "text":     return value.toString();
@@ -81,7 +82,7 @@ export default class ResourceItem extends FileDataElm {
         const col = resource.getCols()[key];
         if(col instanceof ResourceColResource) return col.resource.getItem(value.toString());
         if(col instanceof ResourceColDefType) return col.type.get(value.toString());
-        if(col instanceof ResourceColValue) return this.nova.data.processOPR(this,FileData.getCurrent(this.nova),col.value,value);
+        if(col instanceof ResourceColValue) return Operation.process(this,FileData.getCurrent(this.nova),col.value,value);
         switch((col as ResourceColString).type){
             case "number":   return parseFloat(value);
             case "text":     return value.toString();

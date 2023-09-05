@@ -1,7 +1,6 @@
 import type { CachedMetadata, TFile } from "obsidian";
 import { parseType } from "./parser";
 import type Nova from "src/Nova";
-import { type OprType } from "src/parser";
 import type { ResourceColDefTypeType } from "./ResourceColDefType";
 import type ResourceCol from "./ResourceCol";
 import ResourceColValue from "./ResourceColValue";
@@ -10,15 +9,17 @@ import ResourceColDefType from "./ResourceColDefType";
 import ResourceItem, { ResourceItemFromFileData } from "./ResourceItem";
 import FileData from "src/data/FileData";
 import type FileDataElm from "src/data/FileDataElm";
+import Operation from "src/controllers/Operation";
+import type Expression from "src/data/Expression";
 
 export type ResourceOpts = {
-    extend     ?: string,
+    extend     ?: string|Resource,
     html       ?: string,
     inline     ?: boolean,
     hidden     ?: boolean,
-    filename   ?: OprType,
-    location   ?: OprType,
-    template   ?: string,
+    filename   ?: Expression,
+    location   ?: Expression,
+    template   ?: string|TFile,
 };
 
 export default class Resource {
@@ -32,9 +33,9 @@ export default class Resource {
     private html        : string|null;
     private inline      : boolean;
     private hidden      : boolean;
-    private filename    : OprType|null;
-    private location    : OprType|null;
-    private template    : string|null;
+    private filename    : Expression|null;
+    private location    : Expression|null;
+    private template    : TFile|null;
 
     private items       : ResourceItem[];
     private propGen     : boolean;
@@ -47,6 +48,25 @@ export default class Resource {
         this.items = [];
         this.propGen = false;
         this.properties = properties??{};
+    }
+
+    save(){
+        if(!this.fileData) return;
+        this.nova.app.fileManager.processFrontMatter(this.fileData.file,fm=>{
+            if(!fm['nova-data']) fm['nova-data'] = {};
+            fm['nova-data'][this.name] = {};
+            const obj = fm['nova-data'][this.name];
+            if(this.extend!=null) obj['$extend'] = this.extend.name;
+            if(this.html!=null) obj['$html'] = this.html;
+            if(this.inline!=null) obj['$inline'] = this.inline;
+            if(this.hidden!=null) obj['$hidden'] = this.hidden;
+            if(this.filename!=null) obj['$filename'] = this.filename;
+            if(this.location!=null) obj['$location'] = this.location;
+            if(this.template!=null) obj['$template'] = this.template.path;
+
+            const cols = this.getCols();
+            for(const key in cols) obj[key] = cols.toString();
+        });
     }
 
     private setupProperties(){
@@ -75,18 +95,18 @@ export default class Resource {
         this.html       = opts.html     ?? null;
         this.filename   = opts.filename ?? null;
         this.location   = opts.location ?? null;
-        this.template   = opts.template ?? null;
+        this.template   = opts.template ? this.nova.files.getFile(opts.template) : null;
         this.inline     = opts.inline ? !!opts.inline : false;
         this.hidden     = opts.hidden ? !!opts.hidden : false;
     }
 
     async getPath(data:FileDataElm,curData:FileData){
         if(!this.propGen) this.setupProperties();
-        return this.location ? await this.nova.data.processOPR(data,curData,this.location) : curData.file.parent.path;
+        return this.location ? await this.location.validate(data,curData) : curData.file.parent.path;
     }
     async getFileName(data:FileDataElm,curData:FileData){
         if(!this.propGen) this.setupProperties();
-        return this.filename ? await this.nova.data.processOPR(data,curData,this.filename) : this.name;
+        return this.filename ? await this.filename.validate(data,curData) : this.name;
     }
 
     getExtends(){
@@ -128,7 +148,7 @@ export default class Resource {
             } else if(col instanceof ResourceColResource){
                 nData[key] = { lazy:true,get:async ()=>(nData[key]=col.resource?await this.nova.loader.loadFromResource(col.resource,col.on,nData):def) };
             } else if(col instanceof ResourceColValue){
-                nData[key] = { lazy:true,get:async ()=>(nData[key]=await this.nova.data.processOPR(data,curData,col.value)??def) };
+                nData[key] = { lazy:true,get:async ()=>(nData[key]=await Operation.validate(data,curData,col.value)??def) };
             }
         }
         return Object.assign({},data,{ data:nData });

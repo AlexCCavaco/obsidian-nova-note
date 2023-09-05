@@ -4,14 +4,15 @@ import TaskResource from "src/resources/TaskResource";
 import NovaController from "./NovaController";
 import ResourceColDefType, { type ResourceColDefTypeType } from "src/resources/ResourceColDefType";
 import ResourceColResource, { type ResourceColResourceType } from "src/resources/ResourceColResource";
-import { parseExpression, type OprType } from "src/parser";
+import { type OprType } from "src/parser";
 import FileData from "src/data/FileData";
 import ResourceColValue from "src/resources/ResourceColValue";
 import ResourceColString from "src/resources/ResourceColString";
 import type { ResourceOpts } from "src/resources/Resource";
-import type ResourceCol from "src/resources/ResourceCol";
+import ResourceCol from "src/resources/ResourceCol";
 import ErrorNotice from "src/notices/ErrorNotice";
 import parse from "../resources/parser";
+import Expression from "src/data/Expression";
 
 export type ResourceList = { [key:string]:{ [key:string]:string } };
 
@@ -82,7 +83,7 @@ export default class extends NovaController {
             if(dataElm==null) continue;
             if(colKey[0]!=='$'){
                 try {
-                    const col = this.parseCol(colKey,dataElm.toString(),file??undefined);
+                    const col = dataElm instanceof ResourceCol ? dataElm : this.parseCol(colKey,dataElm.toString(),file??undefined);
                     if(col) cols[colKey] = col;
                 } catch(err){
                     ErrorNotice.error(err,`Column ${colKey} has Errors: `);
@@ -93,8 +94,8 @@ export default class extends NovaController {
             switch(key){
                 case "extend":      opts['extend']   = dataElm.toString(); break;
                 case "html":        opts['html']     = dataElm.toString(); break;
-                case "filename":    opts['filename'] = parseExpression(dataElm.toString()); break;
-                case "location":    opts['location'] = parseExpression(dataElm.toString()); break;
+                case "filename":    opts['filename'] = Expression.parse(dataElm.toString()); break;
+                case "location":    opts['location'] = Expression.parse(dataElm.toString()); break;
                 case "inline":      opts['inline']   = !!dataElm; break;
                 case "hidden":      opts['hidden']   = !!dataElm; break;
                 case "template":    opts['template'] = dataElm.toString(); break;
@@ -113,22 +114,22 @@ export default class extends NovaController {
             case "date":
             case "time":
             case "datetime":
-            case "color":    return new ResourceColString(name, opts.label, opts.type, opts);
-            case "resource": return this.setResourceCol(name, opts.label, opts.resource??'', opts.on, opts);
-            case "value":    return new ResourceColValue(name, opts.label, opts.value, opts);
-            case "type":     return !fileData ? null : this.setResourceType(name, opts.label, opts.value??'', opts, fileData);
+            case "color":    return new ResourceColString(data, name, opts.label, opts.type, opts);
+            case "resource": return this.setResourceCol(data, name, opts.label, opts.resource??'', opts.on, opts);
+            case "value":    return new ResourceColValue(data, name, opts.label, opts.value, opts);
+            case "type":     return !fileData ? null : this.setResourceType(data, name, opts.label, opts.value??'', opts, fileData);
         }
     }
 
-    private setResourceCol(name:string, label:string, resourceVal:string, on:OprType, opts:ResourceColResourceType){
+    private setResourceCol(data:string, name:string, label:string, resourceVal:string, on:OprType, opts:ResourceColResourceType){
         const resource = this.getResource(resourceVal);
         if(!resource) throw new Error(`Resource ${resourceVal} doesn't exist`);
-        return new ResourceColResource(name, label, resource, on, opts);
+        return new ResourceColResource(data, name, label, resource, on, opts);
     }
-    private setResourceType(name:string, label:string, typeVal:string, opts:ResourceColDefTypeType, fileData:FileData){
+    private setResourceType(data:string, name:string, label:string, typeVal:string, opts:ResourceColDefTypeType, fileData:FileData){
         const typeData = this.nova.types.getType(fileData,typeVal);
         if(!typeData) throw new Error(`Type ${typeVal} doesn't exist`);
-        return new ResourceColDefType(name, label, typeData, opts);
+        return new ResourceColDefType(data, name, label, typeData, opts);
     }
 
     getResource(name:string){

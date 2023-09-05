@@ -1,5 +1,6 @@
 import type { OprType } from "src/parser";
 import ResourceCol, { type ResourceColOpts } from "./ResourceCol";
+import type Expression from "src/data/Expression";
 
 export type ResourceColValueType = {
     label: string,
@@ -17,9 +18,14 @@ export default class ResourceColValue extends ResourceCol {
     required: false;
     multi: false;
 
-    constructor(name:string, label:string, value:OprType, opts?:ResourceColOpts ){
-        super(name,label,opts);
+    constructor(rawData:string, name:string, label:string, value:OprType, opts?:ResourceColOpts ){
+        super(rawData,name,label,opts);
         this.value = value??null;
+    }
+
+    static makeRaw(name:string, label:string, value:Expression, opts?:ResourceColOpts ){
+        const raw = `'${label}' => ${value.raw}`;
+        return new this(raw,name,label,value.value,opts);
     }
 
 }

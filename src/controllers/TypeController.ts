@@ -4,6 +4,7 @@ import type FileData from "src/data/FileData";
 import TypeData from "src/data/TypeData";
 import TypeDataElm from "src/data/TypeDataElm";
 import { parseType } from "src/resources/parser";
+import ErrorNotice from "src/notices/ErrorNotice";
 
 export default class extends NovaController {
 
@@ -17,8 +18,13 @@ export default class extends NovaController {
         const typeData = meta.frontmatter['nova-type'][type];
         const typeObj = new TypeData(type);
         for(const dataKey in typeData){
-            const parsedTypeData = parseType(typeData[dataKey]);
-            typeObj.addElm(new TypeDataElm(dataKey,parsedTypeData.label,parsedTypeData.props));
+            try {
+                const parsedTypeData = parseType(typeData[dataKey]);
+                typeObj.addElm(new TypeDataElm(dataKey,parsedTypeData.label,parsedTypeData.props));
+            } catch(err){
+                ErrorNotice.error(err,`Type ${dataKey} has Errors: `);
+                continue;
+            }
         }
         return typeObj;
     }
@@ -27,7 +33,8 @@ export default class extends NovaController {
         const meta = data.getMetadata();
         if(!meta || !meta.frontmatter || !meta.frontmatter['nova-type']) return {};
         const typeElms:{ [key:string]:TypeData } = {};
-        for(const type of meta.frontmatter['nova-type']){ const res = this.getType(data,type); if(res) typeElms[type] = res; }
+        const types = meta.frontmatter['nova-type'];
+        for(const key in types){ const res = this.getType(data,key); if(res) typeElms[key] = res; }
         return typeElms;
     }
 

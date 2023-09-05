@@ -1,11 +1,11 @@
 import type { DISPLAY_TYPE, FROM_TYPE, VIEW_CLAUSE_TYPE, VIEW_TYPE } from "./definitions";
 import Block from "./components/Block.svelte";
-import type { OprType } from "src/parser";
 import NovaView from "./NovaView";
 import { writable, type Writable } from "svelte/store";
 import FileData from "src/data/FileData";
 import type FileDataElm from "src/data/FileDataElm";
 import type Nova from "src/Nova";
+import type { OprType } from "src/parser";
 
 export type BlockDataVal = {[key:string]:unknown|{lazy:true,get:()=>unknown}};
 

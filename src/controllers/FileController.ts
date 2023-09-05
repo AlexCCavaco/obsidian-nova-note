@@ -6,7 +6,12 @@ import { nanoid } from "nanoid";
 import FileData from "src/data/FileData";
 import ResourceBasicInputModal from "src/modals/ResourceBasicInputModal";
 import ResourceEditorModal from "src/modals/ResourceEditorModal";
-import type Resource from "src/resources/Resource";
+import Resource, { type ResourceOpts } from "src/resources/Resource";
+import ResourceColResource from "src/resources/ResourceColResource";
+import type ResourceCol from "src/resources/ResourceCol";
+import ResourceColDefType from "src/resources/ResourceColDefType";
+import ResourceColValue from "src/resources/ResourceColValue";
+import ResourceColString from "src/resources/ResourceColString";
 
 export default class extends NovaController {
 
@@ -15,6 +20,14 @@ export default class extends NovaController {
     constructor(nova:Nova){
         super(nova);
         this.identified = {};
+    }
+
+    getFile(file:string|TFile){
+        if(typeof file !== 'string') return file;
+        for(const iFile of this.nova.vault.getFiles()){
+            if(iFile.path===file) return iFile;
+        }
+        return null;
     }
 
     getFileData(file:TFile|FileData){
@@ -98,12 +111,32 @@ export default class extends NovaController {
     createResourceOnFile(file:TFile|null){
         const nameInputModal = new ResourceBasicInputModal(this.nova,'Input the Name of the New Resource',(resourceName:string)=>{
             nameInputModal.close();
-            const resEditorModal = new ResourceEditorModal(this.nova,resourceName,null,(resource:Resource)=>{
-                //
+            const resEditorModal = new ResourceEditorModal(this.nova,resourceName,({rows,opts})=>{
+                const fileData = file ? new FileData(this.nova,file) : null;
+                const properties:Resource['properties'] = {};
+                for(const key in opts){ properties['$'+key] = opts[key as keyof ResourceOpts]; }
+                for(const key in rows){
+                    const row = rows[key];
+                    const baseOpts = { multi:row.multiple??false,required:row.required };
+                    let col:ResourceCol;
+                    switch(row.type.type){
+                        case 'resource': col = ResourceColResource.makeRaw(row.name,row.name,row.type.resource,row.type.on,baseOpts); break;
+                        case 'type': col = ResourceColDefType.makeRaw(row.name,row.name,row.type.value,baseOpts); break;
+                        case 'value': col = ResourceColValue.makeRaw(row.name,row.name,row.type.value,baseOpts); break;
+                        default: col = ResourceColString.makeRaw(row.name,row.name,row.type.type,baseOpts); break;
+                    }
+                    properties[col.name] = col;
+                }
+                const resource = new Resource(this.nova,resourceName,fileData,properties);
+                this.nova.resources.addResource(resource.name,resource);
+                resource.save();
             });
             resEditorModal.open();
         });
         nameInputModal.open();
+    }
+    editResourceOnFile(file:TFile|null){
+        //
     }
     createResourceItem(file?:TFile|null){
         //if(file==null) file = this.nova.app.workspace.getActiveFile();

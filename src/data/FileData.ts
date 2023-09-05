@@ -28,4 +28,8 @@ export default class FileData {
         return (this.getMetadata()??{}).frontmatter;
     }
 
+    assertFrontmatter(){
+        return (this.meta ? this.meta.frontmatter??{} : {});
+    }
+
 }

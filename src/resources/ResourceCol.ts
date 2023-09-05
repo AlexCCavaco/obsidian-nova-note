@@ -3,13 +3,15 @@ export type ResourceColOpts = { input?:boolean,multi?:boolean,required?:boolean,
 
 export default class ResourceCol {
 
-    name     :string;
-    label    :string;
-    input    :boolean;
-    multi    :boolean;
-    required :boolean;
+    raw     :string;
+    name    :string;
+    label   :string;
+    input   :boolean;
+    multi   :boolean;
+    required:boolean;
 
-    constructor(name:string,label:string,opts?:ResourceColOpts){
+    constructor(rawData:string,name:string,label:string,opts?:ResourceColOpts){
+        this.raw = rawData;
         this.name = name;
         this.label = label;
         if(!opts) opts = {};

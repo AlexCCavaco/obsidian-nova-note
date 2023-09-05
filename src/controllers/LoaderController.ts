@@ -1,11 +1,12 @@
 import type Nova from "src/Nova";
 import NovaController from "./NovaController";
 import FileData from "src/data/FileData";
-import type FileDataElm from "src/data/FileDataElm";
-import type { OprType } from "src/parser";
+import FileDataElm from "src/data/FileDataElm";
 import type Resource from "src/resources/Resource";
 import type { BlockDataVal } from "src/blocks/NovaBlock";
 import ErrorNotice from "src/notices/ErrorNotice";
+import type { OprType } from "src/parser";
+import Operation from "src/controllers/Operation";
 
 export default class extends NovaController {
 
@@ -27,10 +28,10 @@ export default class extends NovaController {
     
     async loadFromTag(tag:string,on:OprType):Promise<FileDataElm[]>{
         return this.forEachFile(async (fileData,curData)=>{
-            const data = this.nova.data.formData(fileData,this.nova.data.assertFrontmatter(fileData));
+            const data = FileDataElm.fromFileData(fileData,fileData.assertFrontmatter());
             const meta = fileData.getMetadata();
             if(!(meta && meta.tags && meta.tags.some(t=>t.tag===tag))) return false;
-            return await this.nova.data.processConditions(data,curData,on) ? data : false;
+            return await Operation.validate(data,curData,on) ? data : false;
         });
     }
     
@@ -47,18 +48,18 @@ export default class extends NovaController {
         return this.forEachFile(async (fileData,curData)=>{
             const meta = fileData.getMetadata();
             if(!(meta && meta.frontmatter && meta.frontmatter['nova-use'])) return false;
-            const data = this.nova.data.formData(fileData,this.nova.data.assertFrontmatter(fileData));
+            const data = FileDataElm.fromFileData(fileData,fileData.assertFrontmatter());
             const use:string|string[] = meta.frontmatter['nova-use'];
             const resources:string[] = Array.isArray(use) ? use : use.split(',').map(u=>u.trim());
             if(!resources.includes(resourceVal)) return false;
-            return await this.nova.data.processConditions(data,curData,on,thisData??data.data) ? data : false;
+            return await Operation.validate(data,curData,on,thisData??data.data) ? data : false;
         });
     }
     
     async loadFromAll(on:OprType):Promise<FileDataElm[]>{
         return this.forEachFile(async (fileData,curData)=>{
-            const data = this.nova.data.formData(fileData,this.nova.data.assertFrontmatter(fileData));
-            return await this.nova.data.processConditions(data,curData,on) ? data : false;
+            const data = FileDataElm.fromFileData(fileData,fileData.assertFrontmatter());
+            return await Operation.validate(data,curData,on) ? data : false;
         });
     }
     

@@ -8,8 +8,8 @@ export type ValType = { type:string,value:unknown } & (
     { type:'number',value:number } |
     { type:'tag',value:string } ) |
     boolean | null;
-export function isOfValType(data:OprType):data is ValType{ return !(data!= null && typeof data === 'object' && data.hasOwnProperty('op')); }
 export type ObjValType = Exclude<ValType,null|boolean>
+export function isOfValType(data:OprType):data is ValType{ return !(data!= null && typeof data === 'object' && data.hasOwnProperty('op')); }
 export function isObjValType(data:ValType):data is ObjValType{ return !(typeof data === 'boolean' || data == null); }
 
 export type OperandType = '-'|'!'|'+'|'-'|'*'|'/'|'='|'!='|'>'|'>='|'<'|'<='|'and'|'or'|'not'|'in'|'nin';
@@ -74,8 +74,8 @@ export const ARRAY      = lazy(():Parser<ValType>=>LBRACK.then(listed(LITERAL)).
 export const FN         = lazy(():Parser<ValType>=>seqMap(WORD,LPAREN.then(listed(EXPRESSION)).skip(RPAREN),(name,params)=>({ type:'fn',value:[name,params] })));
 export const LITERAL    = lazy(():Parser<ValType>=>alt(TRUE, FALSE, NULL, TAG, NUMERIC, FN, ARRAY, STRING_VAL));
 
-export type OPERATION_TYPE = { lhs?:OprType,op:OperandType,rhs:OprType } | { lhs:OprType,op:'if',rhs:[OprType,OprType] };
-export type OprType = OPERATION_TYPE | ValType;
+export type OprTypeType = { lhs?:OprType,op:OperandType,rhs:OprType } | { lhs:OprType,op:'if',rhs:[OprType,OprType] };
+export type OprType = OprTypeType | ValType;
 const mapExpressions = (str:OprType,data:[op:OperandType,rhs:OprType][]):OprType=>{
     if(data.length===0) return str;
     let res:OprType = str;
@@ -108,4 +108,4 @@ export const COMPARATIVE    = lazy(():Parser<OprType>=>seqMap(EQUALITY,        s
 export const LOGICAL        = lazy(():Parser<OprType>=>seqMap(COMPARATIVE,     seq(LOGIC, COMPARATIVE).many(),             mapExpressions));
 export const TERNARY        = lazy(():Parser<OprType>=>seqMap(LOGICAL,         seq(INTERROG.then(EXPRESSION), COLON.then(EXPRESSION)).many(),mapTernary));
 
-export const parseExpression = (data:string)=>EXPRESSION.tryParse(data);
+export const parseExpression = (data:string)=>(EXPRESSION.tryParse(data));

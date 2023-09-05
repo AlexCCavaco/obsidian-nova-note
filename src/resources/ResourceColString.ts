@@ -13,9 +13,14 @@ export default class ResourceColString extends ResourceCol {
     type: 'text'|'number'|'check'|'link'|'date'|'time'|'datetime'|'color';
     input: true;
 
-    constructor(name:string, label:string, type:ResourceColString['type'], opts?:ResourceColOpts ){
-        super(name,label,opts);
+    constructor(rawData:string, name:string, label:string, type:ResourceColString['type'], opts?:ResourceColOpts ){
+        super(rawData,name,label,opts);
         this.type = type;
+    }
+
+    static makeRaw(name:string, label:string, type:ResourceColString['type'], opts?:ResourceColOpts ){
+        const raw = `'${label}' ${type}${opts&&opts.multi?'+':''}${opts&&opts.required?'*':''}`;
+        return new this(raw,name,label,type,opts);
     }
 
 }
