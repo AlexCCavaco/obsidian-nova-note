@@ -15,14 +15,13 @@ export default class ResourceColDefType extends ResourceCol {
     input: true;
     type: TypeData;
 
-    constructor(rawData:string, name:string, label:string, type:TypeData, opts?:ResourceColOpts ){
-        super(rawData,name,label,opts);
+    constructor(name:string, label:string, type:TypeData, opts?:ResourceColOpts ){
+        super(name,label,opts);
         this.type = type;
     }
     
-    static makeRaw(name:string, label:string, type:TypeData, opts?:ResourceColOpts ){
-        const raw = `'${label}' @${type.name}${opts&&opts.multi?'+':''}${opts&&opts.required?'*':''}`;
-        return new this(raw,name,label,type,opts);
+    getRaw(){
+        return `'${this.label}' @${this.type.name}${this.multi?'+':''}${this.required?'*':''}`;
     }
 
 }

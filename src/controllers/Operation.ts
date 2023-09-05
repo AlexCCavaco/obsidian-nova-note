@@ -4,16 +4,18 @@ import type FileData from "../data/FileData";
 import type { BlockDataVal } from "src/blocks/NovaBlock";
 import { isAsync } from "src/tools";
 import path from "path";
+import Expression from "src/data/Expression";
 
 type ConditionalValue = string|boolean|number|unknown[]|null;
 
 export default abstract class {
 
-    static async validate(locationData:FileDataElm,currentData:FileData,condition:OprType,thisData?:BlockDataVal){
+    static async validate(locationData:FileDataElm,currentData:FileData,condition:OprType|Expression,thisData?:BlockDataVal){
         return !!await this.process(locationData,currentData,condition,thisData);
     }
     
-    static async process(locationData:FileDataElm,currentData:FileData,condition:OprType,thisData?:BlockDataVal){
+    static async process(locationData:FileDataElm,currentData:FileData,condition:OprType|Expression,thisData?:BlockDataVal){
+        if(condition instanceof Expression) condition = condition.value;
         return this.formType(await this.processCondition(locationData,currentData,condition,thisData));
     }
 

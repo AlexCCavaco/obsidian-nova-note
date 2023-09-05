@@ -4,7 +4,6 @@ import TaskResource from "src/resources/TaskResource";
 import NovaController from "./NovaController";
 import ResourceColDefType, { type ResourceColDefTypeType } from "src/resources/ResourceColDefType";
 import ResourceColResource, { type ResourceColResourceType } from "src/resources/ResourceColResource";
-import { type OprType } from "src/parser";
 import FileData from "src/data/FileData";
 import ResourceColValue from "src/resources/ResourceColValue";
 import ResourceColString from "src/resources/ResourceColString";
@@ -114,22 +113,22 @@ export default class extends NovaController {
             case "date":
             case "time":
             case "datetime":
-            case "color":    return new ResourceColString(data, name, opts.label, opts.type, opts);
-            case "resource": return this.setResourceCol(data, name, opts.label, opts.resource??'', opts.on, opts);
-            case "value":    return new ResourceColValue(data, name, opts.label, opts.value, opts);
-            case "type":     return !fileData ? null : this.setResourceType(data, name, opts.label, opts.value??'', opts, fileData);
+            case "color":    return new ResourceColString(name, opts.label, opts.type, opts);
+            case "resource": return this.setResourceCol(name, opts.label, opts.resource??'', opts.on, opts);
+            case "value":    return new ResourceColValue(name, opts.label, opts.value, opts);
+            case "type":     return !fileData ? null : this.setResourceType(name, opts.label, opts.value??'', opts, fileData);
         }
     }
 
-    private setResourceCol(data:string, name:string, label:string, resourceVal:string, on:OprType, opts:ResourceColResourceType){
+    private setResourceCol(name:string, label:string, resourceVal:string, on:Expression|null, opts:ResourceColResourceType){
         const resource = this.getResource(resourceVal);
         if(!resource) throw new Error(`Resource ${resourceVal} doesn't exist`);
-        return new ResourceColResource(data, name, label, resource, on, opts);
+        return new ResourceColResource(name, label, resource, on, opts);
     }
-    private setResourceType(data:string, name:string, label:string, typeVal:string, opts:ResourceColDefTypeType, fileData:FileData){
+    private setResourceType(name:string, label:string, typeVal:string, opts:ResourceColDefTypeType, fileData:FileData){
         const typeData = this.nova.types.getType(fileData,typeVal);
         if(!typeData) throw new Error(`Type ${typeVal} doesn't exist`);
-        return new ResourceColDefType(data, name, label, typeData, opts);
+        return new ResourceColDefType(name, label, typeData, opts);
     }
 
     getResource(name:string){

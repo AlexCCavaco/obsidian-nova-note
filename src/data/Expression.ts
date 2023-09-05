@@ -3,6 +3,7 @@ import Operation from "../controllers/Operation";
 import type FileDataElm from "./FileDataElm";
 import type FileData from "./FileData";
 import type { BlockDataVal } from "src/blocks/NovaBlock";
+import type Parsimmon from "parsimmon";
 
 export default class {
 
@@ -23,8 +24,12 @@ export default class {
     }
 
     static parse(data:string){
-        const res = parseExpression(data);
-        return new this(data,res);
+        const rawExpr = parseExpression(data);
+        return this.parsed(data,rawExpr);
+    }
+
+    static parsed(data:string,{value,start,end}:{value:OprType,start:Parsimmon.Index,end:Parsimmon.Index}){
+        return new this(data.substring(start.offset,end.offset),value);
     }
 
 }

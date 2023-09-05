@@ -1,4 +1,5 @@
-import { string, optWhitespace, regex, alt, Parser, seq, seqMap, lazy, whitespace, eof } from "parsimmon";
+import Parsimmon, { string, optWhitespace, regex, alt, Parser, seq, seqMap, lazy, whitespace, eof } from "parsimmon";
+import Expression from "src/data/Expression";
 
 export type ValType = { type:string,value:unknown } & (
     { type:'array',value:unknown[] } |
@@ -95,6 +96,10 @@ const mapTernary = (lhs:OprType,data:[OprType,OprType][]):OprType=>{
     return res;
 };
 
+export function makeExpression(data:string,parser:Parser<OprType>):Parser<Expression>{
+    return parser.mark().map((parsedExpr)=>Expression.parsed(data,parsedExpr));
+}
+
 export const EXPRESSION     = lazy(():Parser<OprType>=>TERNARY);
 
 export const PRIMARY        = lazy(():Parser<OprType>=>LPAREN.then(EXPRESSION).skip(RPAREN)
@@ -108,4 +113,4 @@ export const COMPARATIVE    = lazy(():Parser<OprType>=>seqMap(EQUALITY,        s
 export const LOGICAL        = lazy(():Parser<OprType>=>seqMap(COMPARATIVE,     seq(LOGIC, COMPARATIVE).many(),             mapExpressions));
 export const TERNARY        = lazy(():Parser<OprType>=>seqMap(LOGICAL,         seq(INTERROG.then(EXPRESSION), COLON.then(EXPRESSION)).many(),mapTernary));
 
-export const parseExpression = (data:string)=>(EXPRESSION.tryParse(data));
+export const parseExpression = (data:string):{value:OprType,start:Parsimmon.Index,end:Parsimmon.Index}=>EXPRESSION.mark().tryParse(data);

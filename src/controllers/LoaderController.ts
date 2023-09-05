@@ -7,6 +7,7 @@ import type { BlockDataVal } from "src/blocks/NovaBlock";
 import ErrorNotice from "src/notices/ErrorNotice";
 import type { OprType } from "src/parser";
 import Operation from "src/controllers/Operation";
+import type Expression from "src/data/Expression";
 
 export default class extends NovaController {
 
@@ -26,7 +27,7 @@ export default class extends NovaController {
         return data;
     }
     
-    async loadFromTag(tag:string,on:OprType):Promise<FileDataElm[]>{
+    async loadFromTag(tag:string,on:OprType|Expression):Promise<FileDataElm[]>{
         return this.forEachFile(async (fileData,curData)=>{
             const data = FileDataElm.fromFileData(fileData,fileData.assertFrontmatter());
             const meta = fileData.getMetadata();
@@ -35,7 +36,7 @@ export default class extends NovaController {
         });
     }
     
-    async loadFromResource(resource:Resource|string,on:OprType,thisData?:BlockDataVal):Promise<FileDataElm[]>{
+    async loadFromResource(resource:Resource|string,on:OprType|Expression,thisData?:BlockDataVal):Promise<FileDataElm[]>{
         let resourceVal = '';
         if(typeof resource === 'string'){
             resourceVal = resource;
@@ -56,19 +57,19 @@ export default class extends NovaController {
         });
     }
     
-    async loadFromAll(on:OprType):Promise<FileDataElm[]>{
+    async loadFromAll(on:OprType|Expression):Promise<FileDataElm[]>{
         return this.forEachFile(async (fileData,curData)=>{
             const data = FileDataElm.fromFileData(fileData,fileData.assertFrontmatter());
             return await Operation.validate(data,curData,on) ? data : false;
         });
     }
     
-    async loadFromLocal(reference:string,on:OprType):Promise<FileDataElm[]>{
+    async loadFromLocal(reference:string,on:OprType|Expression):Promise<FileDataElm[]>{
         //TODO load local
         return [];
     }
     
-    async loadFromPath(path:string,on:OprType):Promise<FileDataElm[]>{
+    async loadFromPath(path:string,on:OprType|Expression):Promise<FileDataElm[]>{
         //TODO load from path
         return [];
     }

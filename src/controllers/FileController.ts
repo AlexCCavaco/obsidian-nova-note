@@ -120,10 +120,10 @@ export default class extends NovaController {
                     const baseOpts = { multi:row.multiple??false,required:row.required };
                     let col:ResourceCol;
                     switch(row.type.type){
-                        case 'resource': col = ResourceColResource.makeRaw(row.name,row.name,row.type.resource,row.type.on,baseOpts); break;
-                        case 'type': col = ResourceColDefType.makeRaw(row.name,row.name,row.type.value,baseOpts); break;
-                        case 'value': col = ResourceColValue.makeRaw(row.name,row.name,row.type.value,baseOpts); break;
-                        default: col = ResourceColString.makeRaw(row.name,row.name,row.type.type,baseOpts); break;
+                        case 'resource': col = new ResourceColResource(row.name,row.name,row.type.resource,row.type.on,baseOpts); break;
+                        case 'type': col = new ResourceColDefType(row.name,row.name,row.type.value,baseOpts); break;
+                        case 'value': col = new ResourceColValue(row.name,row.name,row.type.value,baseOpts); break;
+                        default: col = new ResourceColString(row.name,row.name,row.type.type,baseOpts); break;
                     }
                     properties[col.name] = col;
                 }

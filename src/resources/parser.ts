@@ -1,5 +1,5 @@
 import { alt, optWhitespace, regex, seqMap, string, whitespace } from "parsimmon";
-import { WORD, SWORD, opt, EXPRESSION, OPTW_EOF } from "../parser";
+import { WORD, SWORD, opt, EXPRESSION, OPTW_EOF, makeExpression } from "../parser";
 import type { ResourceColStringType } from "./ResourceColString";
 import type { ResourceColDefTypeType } from "./ResourceColDefType";
 import type { ResourceColResourceType } from "./ResourceColResource";
@@ -8,7 +8,7 @@ import type { ResourceColValueType } from "./ResourceColValue";
 export type ResourceColType = ResourceColResourceType | ResourceColValueType | ResourceColStringType | ResourceColDefTypeType;
 export type ResourceType = { [key:string]:ResourceColType };
 
-export const parser = seqMap(
+export const parser = (rawData:string)=>seqMap(
     SWORD,
     alt(
         seqMap(
@@ -20,7 +20,7 @@ export const parser = seqMap(
         seqMap(
             string('@').then(WORD),
             opt(string('+')).skip(OPTW_EOF),
-            regex(/ON/i).skip(whitespace).then(EXPRESSION),
+            regex(/ON/i).skip(whitespace).then(makeExpression(rawData,EXPRESSION)),
             (resource,multi,on)=>({ type:'resource',resource,on,input:false,multi:!!multi,required:false } as Omit<ResourceColResourceType,'label'>)
         ),
         seqMap(
@@ -30,7 +30,7 @@ export const parser = seqMap(
             (resource,multi,required)=>({ type:'resource',resource,on:null,input:true,multi:!!multi,required:!!required } as Omit<ResourceColResourceType,'label'>)
         ),
         seqMap(
-            string('=>').skip(optWhitespace).then(EXPRESSION),
+            string('=>').skip(optWhitespace).then(makeExpression(rawData,EXPRESSION)),
             (value)=>({ type:'value',value,multi:false,required:false } as Omit<ResourceColValueType,'label'>)
         ),
         seqMap(
@@ -51,4 +51,4 @@ export const typeParser = seqMap(
 
 export const parseType = (data:string):{ label:string,props:{[key:string]:any} }=>typeParser.tryParse(data);
 
-export default (data:string):ResourceColType=>parser.tryParse(data);
+export default (data:string):ResourceColType=>parser(data).tryParse(data);

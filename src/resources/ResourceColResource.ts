@@ -1,6 +1,5 @@
 import ResourceCol, { type ResourceColOpts } from "./ResourceCol";
 import type Resource from "./Resource";
-import type { OprType } from "src/parser";
 import type Expression from "src/data/Expression";
 
 export type ResourceColResourceType = {
@@ -10,23 +9,22 @@ export type ResourceColResourceType = {
     multi: boolean,
     required: boolean,
     resource: string|null,
-    on: OprType
+    on: Expression|null
 };
 
 export default class ResourceColResource extends ResourceCol {
 
     resource: Resource;
-    on: OprType;
+    on: Expression|null;
 
-    constructor(rawData:string, name:string, label:string, resource:Resource, on?:OprType, opts?:ResourceColOpts ){
-        super(rawData,name,label,opts);
+    constructor(name:string, label:string, resource:Resource, on?:Expression|null, opts?:ResourceColOpts ){
+        super(name,label,opts);
         this.resource = resource;
         this.on = on ?? null;
     }
 
-    static makeRaw(name:string, label:string, resource:Resource, on?:Expression, opts?:ResourceColOpts ){
-        const raw = `'${label}' @${resource.name}${opts&&opts.multi?'+':''}${opts&&opts.required?'*':''} ${on?' => '+on.raw:''}`;
-        return new this(raw,name,label,resource,on?.value,opts);
+    getRaw(){
+        return `'${this.label}' @${this.resource.name}${this.multi?'+':''}${this.required?'*':''} ${this.on?' => '+this.on.raw:''}`;
     }
 
 }
