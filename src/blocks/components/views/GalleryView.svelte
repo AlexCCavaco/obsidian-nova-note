@@ -23,10 +23,10 @@
 <div class="nova-gallery">
 {#each $data as elm}
     <a class="elm" href="{elm.link}" on:mouseup={openElm(elm)}>
-        <div class="cover">{#if elm.opts.cover}{#await makeImage(elm.opts.title,elm.opts.cover,elm.block,view.file) then icon}{@html icon.outerHTML}{/await}{/if}</div>
+        <div class="cover">{#if elm.opts.cover}{#await makeImage(elm.opts.title??'',elm.opts.cover??'',elm.block,view.file) then icon}{@html icon.outerHTML}{/await}{/if}</div>
         <div class="details">
             <div class="main">
-                {#if elm.opts.cover}<div class="icon">{#await makeIcon(elm.opts.cover,elm.block,view.file) then icon}{@html icon.outerHTML}{/await}</div>{/if}
+                {#if elm.opts.cover}<div class="icon">{#await makeIcon(elm.opts.cover??'',elm.block,view.file) then icon}{@html icon.outerHTML}{/await}</div>{/if}
                 <div class="title">{elm.opts.title}</div>
             </div>
             {#each Object.keys(elm.data) as key}<div class="info">{elm.data[key].value}</div>{/each}

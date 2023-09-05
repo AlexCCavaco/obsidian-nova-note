@@ -1,4 +1,4 @@
-import { isObjValType, isOfValType, type OprType } from "src/parser";
+import { isObjValType, isOfValType } from "src/parser";
 import View from "./components/View.svelte";
 import type { VIEW_TYPE } from "./definitions";
 import type NovaBlock from "./NovaBlock";
@@ -6,6 +6,7 @@ import { writable, type Writable } from "svelte/store";
 import type FileData from "src/data/FileData";
 import type FileDataElm from "src/data/FileDataElm";
 import Operation from "src/controllers/Operation";
+import Expression from "src/data/Expression";
 
 export type BaseOptsType = { [key:string]:unknown };
 export type BaseDataType = { [key:string]:{ value:unknown,label:string } };
@@ -23,9 +24,9 @@ export default class {
 
     order: { key:string,desc?:boolean }[];
     group: string[];
-    alter: { lhs:string,rhs:OprType }[];
-    shows: { key:OprType,label?:string }[];
-    where: OprType;
+    alter: { lhs:string,rhs:Expression }[];
+    shows: { key:Expression,label?:string }[];
+    where: Expression;
 
     data:  Writable<ViewData>;
     block: NovaBlock;
@@ -42,7 +43,7 @@ export default class {
         this.group = [];
         this.alter = [];
         this.shows = [];
-        this.where = true;
+        this.where = Expression.true();
         this.data  = writable([]);
         this.block = block;
         this.file = this.block.file;
@@ -72,11 +73,12 @@ export default class {
             if(!await Operation.validate(data,this.file,this.where)) continue;
             const elm:ViewDataElm = { data:{},opts:{},block:data,link:data.file.path };
             for(const show of this.shows){
-                const name = show.key!=null && isOfValType(show.key) ?
-                    (isObjValType(show.key) ? show.key.value.toString() : show.key.toString()) : `col:${++index}`;
-                elm.data[name] = { value:await Operation.validate(data,this.file,show.key),label:show.label??name };
+                const showKey = show.key.value;
+                const name = showKey!=null && isOfValType(showKey) ?
+                    (isObjValType(showKey) ? showKey.value.toString() : showKey.toString()) : `col:${++index}`;
+                elm.data[name] = { value:await show.key.process(data,this.file),label:show.label??name };
             }
-            for(const altr of this.alter) elm.opts[altr.lhs] = await Operation.validate(data,this.file,altr.rhs);
+            for(const altr of this.alter) elm.opts[altr.lhs] = await altr.rhs.process(data,this.file);
             nData.push(elm);
         }
         this.data.set(nData);

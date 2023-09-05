@@ -72,7 +72,7 @@ export default class NovaNotePlugin extends Plugin {
 		// NOVA LANGUAGE
 		this.app.workspace.onLayoutReady(()=>{
 			if(this.settings.handleNovaBlocks){
-				this.registerMarkdownCodeBlockProcessor("nova",codeBlockProcessor);
+				this.registerMarkdownCodeBlockProcessor("nova",(source,el,ctx)=>codeBlockProcessor(this.nova,source,el,ctx));
 			}
 		});
 	}

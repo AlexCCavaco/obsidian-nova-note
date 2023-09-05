@@ -1,11 +1,11 @@
 import NovaBlock from "./NovaBlock";
 import NovaCol from "./NovaCol";
-import type { BLOCK_TYPE } from "./definitions";
+import type { BlockType } from "./definitions";
 import { type MarkdownPostProcessorContext } from "obsidian";
 import parse from "./parser";
 import type Nova from "src/Nova";
 
-export function handleBlockData(nova:Nova,parentElm:HTMLElement,data:BLOCK_TYPE[]){
+export function handleBlockData(nova:Nova,parentElm:HTMLElement,data:BlockType[]){
     const cols:NovaCol[] = [];
     for(const bData of data){
         switch(bData.block){
@@ -14,7 +14,7 @@ export function handleBlockData(nova:Nova,parentElm:HTMLElement,data:BLOCK_TYPE[
         }
     }
 
-    function handleColumn(data:Extract<BLOCK_TYPE,{ block:'column' }>){
+    function handleColumn(data:Extract<BlockType,{ block:'column' }>){
         switch(data.type){
             case 'start':
                 cols.push(new NovaCol(data.width));
@@ -30,7 +30,7 @@ export function handleBlockData(nova:Nova,parentElm:HTMLElement,data:BLOCK_TYPE[
         }
     }
     
-    function handleDisplay(data:Extract<BLOCK_TYPE,{ block:'display' }>){
+    function handleDisplay(data:Extract<BlockType,{ block:'display' }>){
         const block = new NovaBlock(nova);
         block.setType(data.type??'data');
         for(const clause of data.clauses){
@@ -47,11 +47,11 @@ export function handleBlockData(nova:Nova,parentElm:HTMLElement,data:BLOCK_TYPE[
     }
 }
 
-export function codeBlockProcessor(source:string, el:HTMLElement, ctx:MarkdownPostProcessorContext){
+export function codeBlockProcessor(nova:Nova,source:string, el:HTMLElement, ctx:MarkdownPostProcessorContext){
     const sec = el.createEl('div','nova-sec');
     try {
         const data = parse(source);
-        handleBlockData(this,sec,data);
+        handleBlockData(nova,sec,data);
     } catch(err){
         console.error(err);
         sec.innerHTML = '<pre style="font-size:.85em">' + (err.message ? err.message : err) + '</pre>';

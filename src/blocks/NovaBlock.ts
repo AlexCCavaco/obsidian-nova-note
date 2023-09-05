@@ -1,11 +1,11 @@
-import type { DISPLAY_TYPE, FROM_TYPE, VIEW_CLAUSE_TYPE, VIEW_TYPE } from "./definitions";
+import type { DISPLAY_TYPE, FROM_TYPE, ViewClauseType, VIEW_TYPE } from "./definitions";
 import Block from "./components/Block.svelte";
 import NovaView from "./NovaView";
 import { writable, type Writable } from "svelte/store";
 import FileData from "src/data/FileData";
 import type FileDataElm from "src/data/FileDataElm";
 import type Nova from "src/Nova";
-import type { OprType } from "src/parser";
+import Expression from "src/data/Expression";
 
 export type BlockDataVal = {[key:string]:unknown|{lazy:true,get:()=>unknown}};
 
@@ -20,7 +20,7 @@ export default class {
     type:   DISPLAY_TYPE;
     from:   FROM_TYPE;
     focus:  Writable<string|null>;
-    on:     OprType;
+    on:     Expression;
     views:  NovaView[];
     data:   Writable<FileDataElm[]>;
     file:   FileData;
@@ -33,7 +33,7 @@ export default class {
         this.type   = 'data';
         this.from   = { type:'all' };
         this.focus  = writable(null);
-        this.on     = true;
+        this.on     = Expression.true();
         this.views  = [];
         this.data   = writable([]);
         this.file   = FileData.getCurrent(nova);
@@ -42,9 +42,9 @@ export default class {
     setType(type?:DISPLAY_TYPE){ this.type = type ?? 'data'; }
     setFrom(from:FROM_TYPE){ this.from = from; }
     setFocus(focus:string){ this.focus.set(focus); }
-    setOn(on:OprType){ this.on = on; }
+    setOn(on:Expression){ this.on = on; }
 
-    addView(type:VIEW_TYPE,code:string,label:string,clauses:VIEW_CLAUSE_TYPE[]){
+    addView(type:VIEW_TYPE,code:string,label:string,clauses:ViewClauseType[]){
         const view = new NovaView(this,type,code,label);
         for(const clause of clauses){
             switch(clause.clause){
@@ -74,11 +74,12 @@ export default class {
         const data:FileDataElm[] = await loadData(this.nova,this.from,this.on);
         this.data.set(data);
     }
+
     onDataChange(){}
 
 }
 
-async function loadData(nova:Nova,from:FROM_TYPE,on:OprType):Promise<FileDataElm[]>{
+async function loadData(nova:Nova,from:FROM_TYPE,on:Expression):Promise<FileDataElm[]>{
     switch(from.type){
         case "tag":      return await nova.loader.loadFromTag(from.value,on);
         case "resource": return await nova.loader.loadFromResource(from.value,on);

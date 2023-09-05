@@ -20,7 +20,7 @@ export default class ResourceColResource extends ResourceCol {
     constructor(name:string, label:string, resource:Resource, on?:Expression|null, opts?:ResourceColOpts ){
         super(name,label,opts);
         this.resource = resource;
-        this.on = on ?? null;
+        this.on = on ?? null;console.log('COL',name,this.on)
     }
 
     getRaw(){

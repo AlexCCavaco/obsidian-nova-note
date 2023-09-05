@@ -5,15 +5,19 @@ import type FileData from "./FileData";
 import type { BlockDataVal } from "src/blocks/NovaBlock";
 import type Parsimmon from "parsimmon";
 
-export default class {
+export default class Expression<ExpressionType extends OprType = OprType> {
 
     raw:string;
-    value:OprType;
+    value:ExpressionType;
 
-    constructor(rawData:string,value:OprType){
+    constructor(rawData:string,value:ExpressionType){
         this.raw = rawData;
         this.value = value;
     }
+
+    static null(){ return new this('null',null); }
+    static true(){ return new this('true',true); }
+    static false(){ return new this('false',false); }
 
     async validate(locationData:FileDataElm,currentData:FileData,thisData?:BlockDataVal){
         return await Operation.validate(locationData,currentData,this.value,thisData);
@@ -29,7 +33,7 @@ export default class {
     }
 
     static parsed(data:string,{value,start,end}:{value:OprType,start:Parsimmon.Index,end:Parsimmon.Index}){
-        return new this(data.substring(start.offset,end.offset),value);
+        return new this(data.substring(start.offset,end.offset).trim(),value);
     }
 
 }

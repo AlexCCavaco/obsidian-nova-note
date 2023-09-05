@@ -1,4 +1,4 @@
-import type { OprType } from "src/parser";
+import type Expression from "src/data/Expression";
 
 export type DISPLAY_TYPE = 'tasks' | 'data';
 export const displayData = ['tasks','data'];
@@ -26,19 +26,19 @@ export function formatView(data:string):VIEW_TYPE{
     }
 }
 
-export type BLOCK_TYPE = { block:string } & (
+export type BlockType = { block:string } & (
     ( { block:'column' } & ({ type:'start'|'break',width:number } | { type:'end' }) ) |
-    { block:'display',type?:'tasks'|'data',clauses:DISPLAY_CLAUSE_TYPE[] } );
+    { block:'display',type?:'tasks'|'data',clauses:DisplayClauseType[] } );
 
-export type DISPLAY_CLAUSE_TYPE =
+export type DisplayClauseType =
     { clause:'from',source:FROM_TYPE } |
-    { clause:'on',on:OprType } |
+    { clause:'on',on:Expression } |
     { clause:'focus',focus:string } |
-    { clause:'view',type:VIEW_TYPE,id:string,label:string,clauses:VIEW_CLAUSE_TYPE[] };
+    { clause:'view',type:VIEW_TYPE,id:string,label:string,clauses:ViewClauseType[] };
 
-export type VIEW_CLAUSE_TYPE =
+export type ViewClauseType =
     { clause:'order',order:{ key:string,desc?:boolean }[] } |
     { clause:'group',group:string[] } |
-    { clause:'alter',alter:{ lhs:string,rhs:OprType }[] } |
-    { clause:'shows',shows:{ key:OprType,label?:string }[] } |
-    { clause:'where',where:OprType };
+    { clause:'alter',alter:{ lhs:string,rhs:Expression }[] } |
+    { clause:'shows',shows:{ key:Expression,label?:string }[] } |
+    { clause:'where',where:Expression };
