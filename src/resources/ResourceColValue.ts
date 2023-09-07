@@ -18,8 +18,11 @@ export default class ResourceColValue extends ResourceCol {
     multi: false;
 
     constructor(name:string, label:string, value:Expression, opts?:ResourceColOpts ){
-        super(name,label,opts);
+        super(name,label,'value',opts);
         this.value = value??null;
+        this.input = false;
+        this.required = false;
+        this.multi = false;
     }
 
     getRaw(){

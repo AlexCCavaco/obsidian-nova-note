@@ -12,6 +12,7 @@ import type ResourceCol from "src/resources/ResourceCol";
 import ResourceColDefType from "src/resources/ResourceColDefType";
 import ResourceColValue from "src/resources/ResourceColValue";
 import ResourceColString from "src/resources/ResourceColString";
+import ResourceListModal from "src/modals/ResourceListModal";
 
 export default class extends NovaController {
 
@@ -36,14 +37,14 @@ export default class extends NovaController {
 
     loadFile(file:TFile|FileData){
         const fileData = this.getFileData(file);
-        const meta = fileData.getMetadata();
-        if(!meta || !meta.frontmatter) return;
-        if(meta.frontmatter['nova-data']) try {
-            this.nova.resources.addResources(meta.frontmatter['nova-data'],fileData);
+        const meta = fileData.getFrontmatter();
+        if(!meta) return;
+        if(meta['nova-data']) try {
+            this.nova.resources.addResources(meta['nova-data'],fileData);
         } catch(err){
             ErrorNotice.error(err,`${fileData.file.path}: `);
         }
-        if(meta.frontmatter['id']) this.addId(meta.frontmatter['id'],fileData);
+        if(meta['id']) this.addId(meta['id'],fileData);
     }
 
     fileChanged(file:TFile|FileData, data:string, meta:CachedMetadata){
@@ -130,13 +131,37 @@ export default class extends NovaController {
                 const resource = new Resource(this.nova,resourceName,fileData,properties);
                 this.nova.resources.addResource(resource.name,resource);
                 resource.save();
+                resEditorModal.close();
             });
             resEditorModal.open();
         });
         nameInputModal.open();
     }
-    editResourceOnFile(file:TFile|null){
-        //
+    editResourceOnFile(file:TFile){
+        const resourcesModal = new ResourceListModal(this.nova,(resource)=>{
+            resourcesModal.close();
+            const resEditorModal = ResourceEditorModal.resource(this.nova,resource,({rows,opts})=>{
+                const properties:Resource['properties'] = {};
+                for(const key in opts){ properties['$'+key] = opts[key as keyof ResourceOpts]; }
+                for(const key in rows){
+                    const row = rows[key];
+                    const baseOpts = { multi:row.multiple??false,required:row.required };
+                    let col:ResourceCol;
+                    switch(row.type.type){
+                        case 'resource': col = new ResourceColResource(row.name,row.name,row.type.resource,row.type.on,baseOpts); break;
+                        case 'type': col = new ResourceColDefType(row.name,row.name,row.type.value,baseOpts); break;
+                        case 'value': col = new ResourceColValue(row.name,row.name,row.type.value,baseOpts); break;
+                        default: col = new ResourceColString(row.name,row.name,row.type.type,baseOpts); break;
+                    }
+                    properties[col.name] = col;
+                }
+                resource.updateProperties(properties);
+                resource.save();
+                resEditorModal.close();
+            });
+            resEditorModal.open();
+        },file);
+        resourcesModal.open();
     }
     createResourceItem(file?:TFile|null){
         //if(file==null) file = this.nova.app.workspace.getActiveFile();

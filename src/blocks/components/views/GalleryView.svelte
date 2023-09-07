@@ -100,6 +100,12 @@
                         }
                     }
                 }
+                & > .main .title,
+                & > .info {
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
             }
         }
     }

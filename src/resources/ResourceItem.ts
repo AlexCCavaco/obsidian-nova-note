@@ -51,7 +51,7 @@ export default class ResourceItem extends FileDataElm {
         if(!resource.getCols()[key]) return undefined;
         const col = resource.getCols()[key];
         if(col instanceof ResourceColResource) return col.resource.getItem(value.toString());
-        if(col instanceof ResourceColDefType) return col.type.get(value.toString());
+        if(col instanceof ResourceColDefType) return col.typeData.get(value.toString());
         if(col instanceof ResourceColValue) return Operation.process(fileDataElm,FileData.getCurrent(nova),col.value,value);
         switch((col as ResourceColString).type){
             case "number":   return parseFloat(value);
@@ -81,7 +81,7 @@ export default class ResourceItem extends FileDataElm {
         if(!resource.getCols()[key]) return undefined;
         const col = resource.getCols()[key];
         if(col instanceof ResourceColResource) return col.resource.getItem(value.toString());
-        if(col instanceof ResourceColDefType) return col.type.get(value.toString());
+        if(col instanceof ResourceColDefType) return col.typeData.get(value.toString());
         if(col instanceof ResourceColValue) return Operation.process(this,FileData.getCurrent(this.nova),col.value,value);
         switch((col as ResourceColString).type){
             case "number":   return parseFloat(value);

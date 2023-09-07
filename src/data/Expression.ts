@@ -27,7 +27,8 @@ export default class Expression<ExpressionType extends OprType = OprType> {
         return await Operation.process(locationData,currentData,this.value,thisData);
     }
 
-    static parse(data:string){
+    static parse(data:string|Expression){
+        if(data instanceof Expression) return data;
         const rawExpr = parseExpression(data);
         return this.parsed(data,rawExpr);
     }

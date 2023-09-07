@@ -15,16 +15,17 @@ export type ResourceColResourceType = {
 export default class ResourceColResource extends ResourceCol {
 
     resource: Resource;
+    typeData: 'resource';
     on: Expression|null;
 
     constructor(name:string, label:string, resource:Resource, on?:Expression|null, opts?:ResourceColOpts ){
-        super(name,label,opts);
+        super(name,label,'resource',opts);
         this.resource = resource;
-        this.on = on ?? null;console.log('COL',name,this.on)
+        this.on = on ?? null;
     }
 
     getRaw(){
-        return `'${this.label}' @${this.resource.name}${this.multi?'+':''}${this.required?'*':''} ${this.on?' => '+this.on.raw:''}`;
+        return `'${this.label}' @${this.resource.name}${this.multi?'+':''}${this.required?'*':''}${this.on?' ON '+this.on.raw:''}`;
     }
 
 }

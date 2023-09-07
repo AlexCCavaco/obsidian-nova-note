@@ -1,4 +1,4 @@
-import { SuggestModal } from "obsidian";
+import { SuggestModal, TFile } from "obsidian";
 import type Nova from "src/Nova.js";
 import type Resource from "src/resources/Resource";
 
@@ -6,16 +6,19 @@ export default class extends SuggestModal<Resource> {
 
     nova:Nova;
     cb:(resource:Resource)=>void;
+    file?:TFile;
 
-    constructor(nova:Nova,cb:(resource:Resource)=>void){
+    constructor(nova:Nova,cb:(resource:Resource)=>void,fromFile?:TFile){
         super(nova.app);
         this.nova = nova;
         this.cb = cb;
+        this.file = fromFile;
     }
 
     getSuggestions(query: string):Resource[]|Promise<Resource[]>{
-        return Object.values(this.nova.resources.getResources()).filter(res=>(
-            !res.isHidden() && (
+        const resources = this.file?this.nova.resources.getResourcesFromFile(this.file):this.nova.resources.getResources();
+        return Object.values(resources).filter(res=>(
+            !res.hidden && (
                 !query || query==='' ||
                 (res.name).toLowerCase().includes(query.toLowerCase())
             )

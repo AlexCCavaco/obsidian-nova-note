@@ -13,13 +13,13 @@ import Operation from "src/controllers/Operation";
 import type Expression from "src/data/Expression";
 
 export type ResourceOpts = {
-    extend     ?: string|Resource,
+    extend     ?: Resource,
     html       ?: string,
     inline     ?: boolean,
     hidden     ?: boolean,
     filename   ?: Expression,
     location   ?: Expression,
-    template   ?: string|TFile,
+    template   ?: TFile,
 };
 
 export default class Resource {
@@ -29,19 +29,20 @@ export default class Resource {
     cols    : {[key:string]:ResourceCol};
     fileData: FileData|null;
 
-    private extend      : Resource|null;
-    private html        : string|null;
-    private inline      : boolean;
-    private hidden      : boolean;
-    private filename    : Expression|null;
-    private location    : Expression|null;
-    private template    : TFile|null;
+    private $extend      : Resource|null;
+    private $html        : string|null;
+    private $inline      : boolean;
+    private $hidden      : boolean;
+    private $filename    : Expression|null;
+    private $location    : Expression|null;
+    private $template    : TFile|null;
 
     private items       : ResourceItem[];
     private propGen     : boolean;
     private properties  : {[key:string]:unknown};
 
     constructor(nova:Nova,name:string,file?:FileData|null,properties?:Resource['properties']){
+        console.log(name,properties);
         this.nova = nova;
         this.name = name;
         this.fileData = file??null;
@@ -56,25 +57,29 @@ export default class Resource {
             if(!fm['nova-data']) fm['nova-data'] = {};
             fm['nova-data'][this.name] = {};
             const obj = fm['nova-data'][this.name];
-            if(this.extend!=null) obj['$extend'] = this.extend.name;
-            if(this.html!=null) obj['$html'] = this.html;
-            if(this.inline!=null) obj['$inline'] = this.inline;
-            if(this.hidden!=null) obj['$hidden'] = this.hidden;
-            if(this.filename!=null) obj['$filename'] = this.filename;
-            if(this.location!=null) obj['$location'] = this.location;
-            if(this.template!=null) obj['$template'] = this.template.path;
+            if(this.$extend!=null) obj['$extend'] = this.$extend.name;
+            if(this.$html!=null) obj['$html'] = this.$html;
+            if(this.$inline!=null) obj['$inline'] = this.$inline;
+            if(this.$hidden!=null) obj['$hidden'] = this.$hidden;
+            if(this.$filename!=null) obj['$filename'] = this.$filename;
+            if(this.$location!=null) obj['$location'] = this.$location;
+            if(this.$template!=null) obj['$template'] = this.$template.path;
 
             const cols = this.getCols();
-            for(const key in cols) obj[key] = cols.toString();
+            for(const key in cols) obj[key] = cols[key].getRaw();
         });
+    }
+
+    getProperties(){
+        return this.properties;
     }
 
     private setupProperties(){
         this.propGen = true;
         if(this.properties.$extend){
-            this.extend = this.nova.resources.getResource(this.properties.$extend.toString());
+            this.$extend = this.nova.resources.getResource(this.properties.$extend.toString());
             delete this.properties.$extend;
-            if(this.extend) this.properties = Object.assign({}, this.extend.properties, this.properties);
+            if(this.$extend) this.properties = Object.assign({}, this.$extend.properties, this.properties);
         }
         const { cols,opts } = this.nova.resources.handleResourceCols(this.fileData??undefined,this.properties);
         this.cols = cols;
@@ -92,43 +97,53 @@ export default class Resource {
     }
 
     private updateOpts(opts:ResourceOpts){
-        this.html       = opts.html     ?? null;
-        this.filename   = opts.filename ?? null;
-        this.location   = opts.location ?? null;
-        this.template   = opts.template ? this.nova.files.getFile(opts.template) : null;
-        this.inline     = opts.inline ? !!opts.inline : false;
-        this.hidden     = opts.hidden ? !!opts.hidden : false;
+        this.$html       = opts.html        ??  null;
+        this.$filename   = opts.filename    ??  null;
+        this.$location   = opts.location    ??  null;
+        this.$template   = opts.template    ??  null;
+        this.$inline     = opts.inline      ?? false;
+        this.$hidden     = opts.hidden      ?? false;
     }
+
+    getPathname(){}
 
     async getPath(data:FileDataElm,curData:FileData){
         if(!this.propGen) this.setupProperties();
-        return this.location ? await this.location.validate(data,curData) : curData.file.parent.path;
+        return this.$location ? await this.$location.validate(data,curData) : curData.file.parent.path;
     }
     async getFileName(data:FileDataElm,curData:FileData){
         if(!this.propGen) this.setupProperties();
-        return this.filename ? await this.filename.validate(data,curData) : this.name;
+        return this.$filename ? await this.$filename.validate(data,curData) : this.name;
     }
 
-    getExtends(){
+    get filename(){
         if(!this.propGen) this.setupProperties();
-        return this.extend;
+        return this.$filename;
     }
-    getHTML(){
+    get location(){
         if(!this.propGen) this.setupProperties();
-        return this.html;
+        return this.$location;
     }
-    getTemplate(){
+    get extends(){
         if(!this.propGen) this.setupProperties();
-        return this.template;
+        return this.$extend;
+    }
+    get html(){
+        if(!this.propGen) this.setupProperties();
+        return this.$html;
+    }
+    get template(){
+        if(!this.propGen) this.setupProperties();
+        return this.$template;
     }
 
-    isInline(){
+    get inline(){
         if(!this.propGen) this.setupProperties();
-        return this.inline;
+        return this.$inline;
     }
-    isHidden(){
+    get hidden(){
         if(!this.propGen) this.setupProperties();
-        return this.hidden;
+        return this.$hidden;
     }
 
     update(cols:Resource['cols']) {

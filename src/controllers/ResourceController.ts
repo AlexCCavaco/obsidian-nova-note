@@ -12,6 +12,7 @@ import ResourceCol from "src/resources/ResourceCol";
 import ErrorNotice from "src/notices/ErrorNotice";
 import parse from "../resources/parser";
 import Expression from "src/data/Expression";
+import { TFile } from "obsidian";
 
 export type ResourceList = { [key:string]:{ [key:string]:string } };
 
@@ -44,7 +45,7 @@ export default class extends NovaController {
         const keys = Object.keys(resourcesData);
         for(const key of keys){
             const data = resourcesData[key];
-            if(this.resources[key]) new ErrorNotice(`Duplicated Resource ${key}, Unexpected Behaviour will occur, please rename one of the Resources`);
+            //TODO if(this.resources[key]) new ErrorNotice(`Duplicated Resource ${key}, Unexpected Behaviour will occur, please rename one of the Resources`);
             this.resources[key] = new Resource(this.nova,key,file,data);
         }
     }
@@ -91,13 +92,13 @@ export default class extends NovaController {
             }
             const key = colKey.substring(1) as keyof ResourceOpts;
             switch(key){
-                case "extend":      opts['extend']   = dataElm.toString(); break;
+                case "extend":      opts['extend']   = this.nova.resources.getResource(dataElm.toString())??undefined; break;
                 case "html":        opts['html']     = dataElm.toString(); break;
                 case "filename":    opts['filename'] = Expression.parse(dataElm.toString()); break;
                 case "location":    opts['location'] = Expression.parse(dataElm.toString()); break;
                 case "inline":      opts['inline']   = !!dataElm; break;
                 case "hidden":      opts['hidden']   = !!dataElm; break;
-                case "template":    opts['template'] = dataElm.toString(); break;
+                case "template":    opts['template'] = this.nova.files.getFile(dataElm.toString())??undefined; break;
             }
         }
         return { cols,opts };
@@ -136,6 +137,18 @@ export default class extends NovaController {
     }
     getResources(){
         return this.resources;
+    }
+    
+    getResourcesFromFile(file:TFile|FileData){
+        const fileData = file instanceof TFile ? new FileData(this.nova,file) : file;
+        const meta = fileData.getFrontmatter();
+        const resources:Resource[] = [];
+        if(!meta||!meta['nova-data']) return resources;
+        for(const key in meta['nova-data']){
+            const resource = this.nova.resources.getResource(key);
+            if(resource) resources.push(resource);
+        }
+        return resources;
     }
 
 }

@@ -14,8 +14,8 @@ export default class ResourceColString extends ResourceCol {
     input: true;
 
     constructor(name:string, label:string, type:ResourceColString['type'], opts?:ResourceColOpts ){
-        super(name,label,opts);
-        this.type = type;
+        super(name,label,type,opts);
+        this.input = true;
     }
 
     getRaw(){

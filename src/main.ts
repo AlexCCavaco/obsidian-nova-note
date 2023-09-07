@@ -62,6 +62,11 @@ export default class NovaNotePlugin extends Plugin {
 				name: "Create Resource On This File",
 				editorCallback:(editor:Editor,ctx:MarkdownView)=>this.nova.files.createResourceOnFile(ctx.file),
 			});
+			this.addCommand({
+				id: "edit-nova-resource-from-file",
+				name: "Edit Resource From This File",
+				editorCallback:(editor:Editor,ctx:MarkdownView)=>this.nova.files.editResourceOnFile(ctx.file),
+			});
 			//this.addCommand({
 			//	id: "create-nova-resource-item",
 			//	name: "Create Resource Item",
