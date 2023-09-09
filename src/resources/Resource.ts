@@ -1,4 +1,4 @@
-import type { CachedMetadata, TFile } from "obsidian";
+import { TFile, type CachedMetadata } from "obsidian";
 import { parseType } from "./parser";
 import type Nova from "src/Nova";
 import type { ResourceColDefTypeType } from "./ResourceColDefType";
@@ -42,7 +42,6 @@ export default class Resource {
     private properties  : {[key:string]:unknown};
 
     constructor(nova:Nova,name:string,file?:FileData|null,properties?:Resource['properties']){
-        console.log(name,properties);
         this.nova = nova;
         this.name = name;
         this.fileData = file??null;
@@ -176,8 +175,8 @@ export default class Resource {
         return { name:value,...parseType(typeData) };
     }
 
-    async getItem(key:string):Promise<ResourceItem|null>{
-        for(const item of this.items) if(await item.getId()===key) return item;
+    async getItem(id:string):Promise<ResourceItem|null>{
+        for(const item of this.items) if(await item.getId()===id) return item;
         return null;
     }
 
@@ -186,29 +185,34 @@ export default class Resource {
         return Object.values(this.items);
     }
 
+    getItemFrom(file:TFile|FileData,metadata?:CachedMetadata):ResourceItem|null{
+        const fileData = file instanceof TFile ? new FileData(this.nova,file) : file;
+        const data = fileData.getFrontmatter();
+        if(!data || !data['nova-use']) return null;
+        if(typeof data['nova-use'] === 'string'){
+            if(data['nova-use']!==this.name) return null;
+            const item = ResourceItemFromFileData(this,fileData,data);
+            return item;
+        }
+        if(Array.isArray(data['nova-use'])){
+            if(!data['nova-use'].includes(this.name)) return null;
+            const item = ResourceItemFromFileData(this,fileData,data);
+            return item;
+        }
+        return null;
+    }
+
     loadItems():ResourceItem[]{
         const files = this.nova.app.vault.getMarkdownFiles();
         for(const file of files) this.loadItem(file);
         return this.items;
     }
 
-    loadItem(file:TFile,metadata?:CachedMetadata):ResourceItem|null{
-        const fileData = new FileData(this.nova,file);
-        const data = fileData.getFrontmatter();
-        if(!data || !data.use) return null;
-        if(typeof data.use === 'string'){
-            if(data.use!==this.name) return null;
-            const item = ResourceItemFromFileData(this,fileData,data);
-            this.items.push(item);
-            return item;
-        }
-        if(Array.isArray(data.use)){
-            if(!data.use.includes(this.name)) return null;
-            const item = ResourceItemFromFileData(this,fileData,data);
-            this.items.push(item);
-            return item;
-        }
-        return null;
+    loadItem(file:TFile|FileData,metadata?:CachedMetadata):ResourceItem|null{
+        const item = this.getItemFrom(file,metadata);
+        if(item==null) return null;
+        this.items.push(item);
+        return item;
     }
 
     addItem(file:TFile,data:{[key:string]:unknown}){

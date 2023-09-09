@@ -12,7 +12,7 @@ export default class FileDataElm extends FileData {
 
     constructor(nova:Nova,file:TFile,data?:FileDataElm['data']){
         super(nova,file);
-        this.setData(data??{});
+        if(data&&Object.keys(data).length>0) this.setData(data??{});
     }
 
     static fromFileData(fileData:FileData,data:FileDataElm['data']){

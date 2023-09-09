@@ -17,7 +17,7 @@ type ResourceEditorRows = Required<ResourceEditorRow['data']>[];
 type ResourceEditorOpts = ResourceOpts;
 type ResourceEditorCB = (data:{ rows:ResourceEditorRows,opts:ResourceEditorOpts })=>void;
 
-export default class extends NovaModal {
+export default class extends NovaModal<{ rows:ResourceEditorRows,opts:ResourceEditorOpts }> {
     
     name        :string;
 

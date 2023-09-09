@@ -1,17 +1,14 @@
-import { SuggestModal, TFile } from "obsidian";
+import { TFile } from "obsidian";
 import type Nova from "src/Nova.js";
 import type Resource from "src/resources/Resource";
+import NovaSuggestModal from "./NovaSuggestModal";
 
-export default class extends SuggestModal<Resource> {
-
-    nova:Nova;
-    cb:(resource:Resource)=>void;
+export default class extends NovaSuggestModal<Resource> {
+    
     file?:TFile;
 
     constructor(nova:Nova,cb:(resource:Resource)=>void,fromFile?:TFile){
-        super(nova.app);
-        this.nova = nova;
-        this.cb = cb;
+        super(nova,cb);
         this.file = fromFile;
     }
 
@@ -28,10 +25,6 @@ export default class extends SuggestModal<Resource> {
     renderSuggestion(resource: Resource, el: HTMLElement) {
         el.createEl("div", { text: resource.name });
         if(resource.fileData) el.createEl("small", { text: (resource.fileData.file ? resource.fileData.file.path : 'native') });
-    }
-
-    onChooseSuggestion(item: Resource, evt: MouseEvent | KeyboardEvent) {
-        if(this.cb) this.cb(item);
     }
 
 }

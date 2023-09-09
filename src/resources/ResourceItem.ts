@@ -11,12 +11,13 @@ import Operation from "src/controllers/Operation";
 
 export default class ResourceItem extends FileDataElm {
 
-    resource    : Resource;
+    resource    :Resource;
+    $title      :string;
 
     constructor(nova:Nova,resource:Resource,file:TFile,data?:FileDataElm['data']){
         super(nova,file);
         this.resource = resource;
-        if(data) this.setData(ResourceItem.assertData(nova,resource,this,data??{}));
+        if(data) this.setData(this.assertData(data??{}));
     }
 
     static async create(nova:Nova,resource:Resource,fileData:FileData,data:FileDataElm['data']){
@@ -65,21 +66,21 @@ export default class ResourceItem extends FileDataElm {
         }
     }
 
-    protected assertData(resource:Resource,data:FileDataElm['data']):FileDataElm['data']{
-        const keys = Object.keys(resource.getCols());
+    protected assertData(data:FileDataElm['data']):FileDataElm['data']{
+        const keys = Object.keys(this.resource.getCols());
         const res:FileDataElm['data'] = {};
         for(const key of keys){
             if(data[key]==null) continue;
-            const val = this.assertValue(resource,key,data[key]);
+            const val = this.assertValue(key,data[key]);
             if(val==null) continue;
             res[key] = val;
         }
         return res;
     }
 
-    protected assertValue(resource:Resource,key:string,value:any){
-        if(!resource.getCols()[key]) return undefined;
-        const col = resource.getCols()[key];
+    protected assertValue(key:string,value:any){
+        if(!this.resource.getCols()[key]) return undefined;
+        const col = this.resource.getCols()[key];
         if(col instanceof ResourceColResource) return col.resource.getItem(value.toString());
         if(col instanceof ResourceColDefType) return col.typeData.get(value.toString());
         if(col instanceof ResourceColValue) return Operation.process(this,FileData.getCurrent(this.nova),col.value,value);
@@ -96,11 +97,11 @@ export default class ResourceItem extends FileDataElm {
     }
 
     setData(data:FileDataElm['data']){
-        this.data = this.assertData(this.resource,data);
+        this.data = this.assertData(data);
     }
 
     setValue(key:string,value:unknown){
-        const val = this.assertValue(this.resource,key,value);
+        const val = this.assertValue(key,value);
         if(val===undefined) return null;
         this.data[key] = val;
     }

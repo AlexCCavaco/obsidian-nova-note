@@ -1,7 +1,7 @@
 import type Nova from "src/Nova";
 import NovaModal, { type NovaModalInput } from "./NovaModal";
 
-export default class extends NovaModal {
+export default class extends NovaModal<string> {
 
     message     :string
     cb         ?:(data:string)=>void|boolean;

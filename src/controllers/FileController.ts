@@ -13,6 +13,7 @@ import ResourceColDefType from "src/resources/ResourceColDefType";
 import ResourceColValue from "src/resources/ResourceColValue";
 import ResourceColString from "src/resources/ResourceColString";
 import ResourceListModal from "src/modals/ResourceListModal";
+import ResourceItemListModal from "src/modals/ResourceItemListModal";
 
 export default class extends NovaController {
 
@@ -89,12 +90,13 @@ export default class extends NovaController {
     }
     
     async getIdOrGenerate(fileData:FileData){
-        if(fileData.meta&&fileData.meta.frontmatter&&fileData.meta.frontmatter['nova-id']) return fileData.meta.frontmatter['nova-id'];
+        const meta = fileData.getFrontmatter();
+        if(meta&&meta['id']) return meta['id'];
         return await this.generateId(fileData);
     }
     
     getId(fileData:FileData){
-        if(fileData.meta&&fileData.meta.frontmatter&&fileData.meta.frontmatter['nova-id']) return fileData.meta.frontmatter['nova-id'];
+        if(fileData.meta&&fileData.meta.frontmatter&&fileData.meta.frontmatter['id']) return fileData.meta.frontmatter['id'];
         return null;
     }
     
@@ -163,13 +165,35 @@ export default class extends NovaController {
         },file);
         resourcesModal.open();
     }
+
     createResourceItem(file?:TFile|null){
-        //if(file==null) file = this.nova.app.workspace.getActiveFile();
-        //const resourceList = new ResourceListModal(this.nova.app,(resource)=>{
-        //    const resourceForm = new ResourceEditableModal(this.nova,resource,file as TFile);
-        //    resourceForm.open();
-        //});
-        //resourceList.open();
+        //
+    }
+    editResourceDataOnFile(file:TFile){
+        const resItemsModal = new ResourceItemListModal(this.nova,(item)=>{
+            resItemsModal.close();
+            //const resEditorModal = ResourceEditorModal.resource(this.nova,resource,({rows,opts})=>{
+            //    const properties:Resource['properties'] = {};
+            //    for(const key in opts){ properties['$'+key] = opts[key as keyof ResourceOpts]; }
+            //    for(const key in rows){
+            //        const row = rows[key];
+            //        const baseOpts = { multi:row.multiple??false,required:row.required };
+            //        let col:ResourceCol;
+            //        switch(row.type.type){
+            //            case 'resource': col = new ResourceColResource(row.name,row.name,row.type.resource,row.type.on,baseOpts); break;
+            //            case 'type': col = new ResourceColDefType(row.name,row.name,row.type.value,baseOpts); break;
+            //            case 'value': col = new ResourceColValue(row.name,row.name,row.type.value,baseOpts); break;
+            //            default: col = new ResourceColString(row.name,row.name,row.type.type,baseOpts); break;
+            //        }
+            //        properties[col.name] = col;
+            //    }
+            //    resource.updateProperties(properties);
+            //    resource.save();
+            //    resEditorModal.close();
+            //});
+            //resEditorModal.open();
+        },file);
+        resItemsModal.open();
     }
 
     /*/===/*/

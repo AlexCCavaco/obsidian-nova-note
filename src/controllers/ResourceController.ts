@@ -13,6 +13,7 @@ import ErrorNotice from "src/notices/ErrorNotice";
 import parse from "../resources/parser";
 import Expression from "src/data/Expression";
 import { TFile } from "obsidian";
+import type ResourceItem from "src/resources/ResourceItem";
 
 export type ResourceList = { [key:string]:{ [key:string]:string } };
 
@@ -149,6 +150,22 @@ export default class extends NovaController {
             if(resource) resources.push(resource);
         }
         return resources;
+    }
+    
+    getResourceItemsFromFile(file:TFile|FileData){
+        const fileData = file instanceof TFile ? new FileData(this.nova,file) : file;
+        const meta = fileData.getFrontmatter();
+        const items:ResourceItem[] = [];
+        if(!meta||!meta['nova-use']) return items;
+        const keys = Array.isArray(meta['nova-use']) ? meta['nova-use'] : [meta['nova-use']];
+        for(const key of keys){
+            const resource = this.nova.resources.getResource(key);
+            if(!resource) continue;
+            const item = resource.getItemFrom(fileData);
+            if(!item) continue;
+            items.push(item);
+        }
+        return items;
     }
 
 }

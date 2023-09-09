@@ -67,11 +67,16 @@ export default class NovaNotePlugin extends Plugin {
 				name: "Edit Resource From This File",
 				editorCallback:(editor:Editor,ctx:MarkdownView)=>this.nova.files.editResourceOnFile(ctx.file),
 			});
-			//this.addCommand({
-			//	id: "create-nova-resource-item",
-			//	name: "Create Resource Item",
-			//	editorCallback:(editor:Editor,ctx:MarkdownView)=>this.nova.files.createResourceItem(ctx.file),
-			//});
+			this.addCommand({
+				id: "create-nova-resource-item",
+				name: "Create Resource Item",
+				editorCallback:(editor:Editor,ctx:MarkdownView)=>this.nova.files.createResourceItem(ctx.file),
+			});
+			this.addCommand({
+				id: "edit-nova-resource-data-from-file",
+				name: "Edit Resource Data From This File",
+				editorCallback:(editor:Editor,ctx:MarkdownView)=>this.nova.files.editResourceDataOnFile(ctx.file),
+			});
 		}
 
 		// NOVA LANGUAGE

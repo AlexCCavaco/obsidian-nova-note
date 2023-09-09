@@ -6,12 +6,12 @@ export type NovaModalInput = HTMLInputElement & {
     errors: HTMLElement[];
 }
 
-export default class extends Modal {
+export default class<NovaModalVal> extends Modal {
 
     nova    :Nova;
-    cb     ?:(data:unknown)=>void;
+    cb     ?:(data:NovaModalVal)=>void;
 
-    constructor(nova:Nova,cb?:(data:unknown)=>void){
+    constructor(nova:Nova,cb?:(data:NovaModalVal)=>void){
         super(nova.app);
         this.nova = nova;
         this.cb = cb??undefined;
