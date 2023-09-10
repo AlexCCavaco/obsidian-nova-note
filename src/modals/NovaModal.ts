@@ -17,7 +17,7 @@ export default class<NovaModalVal> extends Modal {
         this.cb = cb??undefined;
     }
 
-    setTitle(title:string){
+    setTitle(title:string,subText?:string){
         this.titleEl.textContent = title;
     }
 

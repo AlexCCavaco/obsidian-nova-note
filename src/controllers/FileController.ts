@@ -14,6 +14,7 @@ import ResourceColValue from "src/resources/ResourceColValue";
 import ResourceColString from "src/resources/ResourceColString";
 import ResourceListModal from "src/modals/ResourceListModal";
 import ResourceItemListModal from "src/modals/ResourceItemListModal";
+import ResourceItemEditorModal from "src/modals/ResourceItemEditorModal";
 
 export default class extends NovaController {
 
@@ -170,9 +171,9 @@ export default class extends NovaController {
         //
     }
     editResourceDataOnFile(file:TFile){
-        const resItemsModal = new ResourceItemListModal(this.nova,(item)=>{
+        const resItemsModal = ResourceItemListModal.fromFile(this.nova,file,(item)=>{
             resItemsModal.close();
-            //const resEditorModal = ResourceEditorModal.resource(this.nova,resource,({rows,opts})=>{
+            const itemEditorModal = ResourceItemEditorModal.item(this.nova,item,(data)=>{
             //    const properties:Resource['properties'] = {};
             //    for(const key in opts){ properties['$'+key] = opts[key as keyof ResourceOpts]; }
             //    for(const key in rows){
@@ -189,10 +190,10 @@ export default class extends NovaController {
             //    }
             //    resource.updateProperties(properties);
             //    resource.save();
-            //    resEditorModal.close();
-            //});
-            //resEditorModal.open();
-        },file);
+                itemEditorModal.close();
+            });
+            itemEditorModal.open();
+        });
         resItemsModal.open();
     }
 

@@ -325,6 +325,10 @@
 	grid-template-columns: 2fr 2fr 2fr 1fr 1fr 25px;
 	border-bottom: 1px solid var(--bg3);
 }
+.res-item-form .res-grid-header,
+.res-item-form .res-grid-row {
+	grid-template-columns: 1fr 2fr;
+}
 .res-grid-header {
 	padding: 7px 0;
 }
